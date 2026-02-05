@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: paulfun-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      # 資料永續化 - 使用 named volume
+      - sqlserver-data:/var/opt/mssql
+      # 備份目錄
+      - ./docker/sqlserver/backup:/var/opt/mssql/backup
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # .NET API Backend
+  api:
+    build:
+      context: ./backend/PaulFunBlogger.Api
+      dockerfile: Dockerfile
+    container_name: paulfun-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=PaulFunBlogger;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      # 媒體檔案永續化
+      - media-uploads:/app/uploads
+    restart: unless-stopped
+
+  # Next.js Frontend (開發模式)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: paulfun-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+# Named volumes for data persistence
+volumes:
+  # SQL Server 資料永續化
+  # 這個 volume 會保存所有資料庫檔案，即使容器被刪除重建也不會遺失
+  sqlserver-data:
+    driver: local
+
+  # 媒體檔案永續化
+  media-uploads:
+    driver: local
+
+networks:
+  default:
+    name: paulfun-network

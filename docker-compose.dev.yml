@@ -1,0 +1,27 @@
+# 開發環境專用 - 只啟動資料庫
+# 使用方式: docker-compose -f docker-compose.dev.yml up -d
+# 注意: 使用 Azure SQL Edge 以支援 Apple Silicon (ARM64)
+# 注意: port 1434 避免與其他 SQL Server 容器衝突
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: paulfun-sqlserver-dev
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver-dev-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "cat < /dev/tcp/localhost/1433 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  sqlserver-dev-data:
+    driver: local
