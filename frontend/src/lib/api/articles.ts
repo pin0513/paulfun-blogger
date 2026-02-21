@@ -38,10 +38,10 @@ export async function getArticles(
   );
 }
 
-export async function getArticleBySlug(
-  slug: string
+export async function getArticleByID(
+  id: number
 ): Promise<ApiResponse<Article>> {
-  return apiClient.get<ApiResponse<Article>>(`/api/articles/${slug}`);
+  return apiClient.get<ApiResponse<Article>>(`/api/articles/${id}`);
 }
 
 // Admin APIs

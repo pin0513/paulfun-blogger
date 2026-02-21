@@ -8,6 +8,7 @@ interface Category {
   id: number;
   name: string;
   slug: string;
+  articleCount?: number;
 }
 
 interface Tag {
@@ -64,13 +65,19 @@ export default function CategoriesPage() {
                   <div className="w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center text-primary font-mono text-lg group-hover:shadow-glow transition-shadow">
                     {cat.name.charAt(0)}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-heading font-semibold text-text group-hover:text-primary transition-colors">
                       {cat.name}
                     </h3>
                     <p className="text-xs text-text-muted font-mono">
                       /{cat.slug}
                     </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-mono font-bold text-primary">
+                      {cat.articleCount ?? 0}
+                    </span>
+                    <p className="text-xs text-text-muted">篇文章</p>
                   </div>
                 </div>
               </Link>

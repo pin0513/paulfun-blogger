@@ -5,11 +5,12 @@ import "time"
 // ── 共用子 DTO ────────────────────────────────────────────────
 
 type CategoryDto struct {
-	ID        uint  `json:"id"`
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	ParentID  *uint  `json:"parentId"`
-	SortOrder int    `json:"sortOrder"`
+	ID           uint   `json:"id"`
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	ParentID     *uint  `json:"parentId"`
+	SortOrder    int    `json:"sortOrder"`
+	ArticleCount int    `json:"articleCount,omitempty"`
 }
 
 type TagDto struct {

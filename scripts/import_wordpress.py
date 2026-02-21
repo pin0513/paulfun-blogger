@@ -41,6 +41,13 @@ except ImportError:
     HAS_YAML = False
     print("[WARN] pyyaml 未安裝，使用 regex 解析 front matter（pip install pyyaml 可提升可靠性）")
 
+try:
+    import markdown as md_lib
+    HAS_MARKDOWN = True
+except ImportError:
+    HAS_MARKDOWN = False
+    print("[WARN] markdown 未安裝，內文將以純文字儲存（pip install markdown 可啟用 HTML 轉換）")
+
 
 # ── Front matter 解析 ─────────────────────────────────────────────────────────
 
@@ -86,21 +93,46 @@ def _parse_yaml_regex(raw: str) -> dict:
 
 # ── 內容清理 ──────────────────────────────────────────────────────────────────
 
+def rewrite_image_urls(html: str) -> str:
+    """將 WordPress 圖片 URL 替換為相對路徑（Go 靜態服務 /uploads/）"""
+    # GCP VM IP（舊部落格實際使用）
+    html = html.replace(
+        "http://35.194.140.171/wordpress/wp-content/uploads/",
+        "/uploads/"
+    )
+    # 備用：網域名稱
+    html = html.replace(
+        "https://paulfun.net/wordpress/wp-content/uploads/",
+        "/uploads/"
+    )
+    html = html.replace(
+        "http://paulfun.net/wordpress/wp-content/uploads/",
+        "/uploads/"
+    )
+    return html
+
+
 def clean_content(body: str) -> str:
     """
-    將 WordPress 匯出的混合格式轉為較乾淨的 markdown。
-    主要處理：
-      - 字串 '\\n' → 實際換行
-      - 多餘空白行壓縮
-      - 表格列頭的 | \\n 移除
+    將 WordPress 匯出的 Markdown 轉為 HTML。
+    - 若已安裝 markdown 套件：使用 nl2br 擴充（\n → <br>），輸出完整 HTML
+    - 否則：回傳純文字（壓縮空白行）
+    同時將 WordPress 圖片 URL 改為相對路徑。
     """
     # 字串 \n 轉真正換行
     text = body.replace("\\n", "\n")
 
-    # 移除行首行尾多餘空白（但保留縮排）
-    lines = [l.rstrip() for l in text.splitlines()]
+    if HAS_MARKDOWN:
+        extensions = ['fenced_code', 'tables', 'nl2br']
+        try:
+            html = md_lib.markdown(text, extensions=extensions)
+        except Exception:
+            # nl2br 可能不在所有版本，退回基本擴充
+            html = md_lib.markdown(text, extensions=['fenced_code', 'tables'])
+        return rewrite_image_urls(html)
 
-    # 壓縮連續空行（最多保留 2 個）
+    # Fallback：純文字清理
+    lines = [l.rstrip() for l in text.splitlines()]
     cleaned = []
     blank = 0
     for line in lines:
@@ -116,14 +148,18 @@ def clean_content(body: str) -> str:
 
 
 def extract_summary(body: str, max_len: int = 200) -> str:
-    """從內文提取前幾句作為摘要"""
-    # 移除 markdown 標記
-    text = re.sub(r'#+\s+', '', body)         # 標題
-    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # bold
-    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
-    text = re.sub(r'!\[[^\]]*\]\([^\)]+\)', '', text)       # images
-    text = re.sub(r'`[^`]+`', '', text)        # inline code
-    text = re.sub(r'\n+', ' ', text).strip()
+    """從內文提取前幾句作為摘要（自動處理 HTML 或 Markdown）"""
+    if HAS_MARKDOWN and '<' in body:
+        # HTML 模式：剝除標籤
+        text = re.sub(r'<[^>]+>', ' ', body)
+    else:
+        # Markdown 模式：移除標記
+        text = re.sub(r'#+\s+', '', body)
+        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+        text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+        text = re.sub(r'!\[[^\]]*\]\([^\)]+\)', '', text)
+        text = re.sub(r'`[^`]+`', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
 
     if len(text) <= max_len:
         return text
@@ -189,10 +225,10 @@ class BlogApiClient:
         )
         return resp.json()
 
-    def import_articles(self, articles: list) -> dict:
+    def import_articles(self, articles: list, update: bool = False) -> dict:
         resp = self.session.post(
             f"{self.base_url}/api/admin/import/articles",
-            json={"articles": articles},
+            json={"articles": articles, "update": update},
             timeout=120,
         )
         return resp.json()
@@ -306,7 +342,8 @@ def run(args):
         print("[Step 2/3] 無標籤需匯入，跳過")
 
     # ── Step 4: 批量匯入文章 ─────────────────────────────────────────────────
-    print(f"\n[Step 3/3] 匯入 {len(parsed)} 篇文章（批次大小: {args.batch}）...")
+    update_mode = getattr(args, 'update', False)
+    print(f"\n[Step 3/3] 匯入 {len(parsed)} 篇文章（批次大小: {args.batch}，update={update_mode}）...")
 
     articles_payload = []
     for p in parsed:
@@ -340,7 +377,7 @@ def run(args):
         batch_num = i // args.batch + 1
         print(f"  批次 {batch_num}: 匯入第 {i+1}~{min(i+len(batch), len(articles_payload))} 篇...")
 
-        result = client.import_articles(batch)
+        result = client.import_articles(batch, update=update_mode)
         if result.get("success"):
             d = result["data"]
             total_created += d.get("created", 0)
@@ -391,6 +428,12 @@ def main():
     parser.add_argument("--email", default="pin0513@gmail.com", help="管理員 email")
     parser.add_argument("--password", default="Test1234", help="管理員密碼")
     parser.add_argument("--batch", type=int, default=20, help="每批文章數量（預設 20）")
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        default=False,
+        help="slug 已存在時更新 content（預設跳過）",
+    )
 
     args = parser.parse_args()
 

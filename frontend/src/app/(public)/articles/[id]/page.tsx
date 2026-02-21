@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getArticleBySlug } from "@/lib/api/articles";
-import { getMediaUrl } from "@/lib/api/media";
+import { getArticleByID } from "@/lib/api/articles";
+import { getCoverUrl } from "@/lib/api/media";
 import { TableOfContents } from "@/components/article/TableOfContents";
 import { ReactionButtons } from "@/components/article/ReactionButtons";
 import { CommentList } from "@/components/comment/CommentList";
@@ -12,7 +12,7 @@ import type { Article } from "@/types";
 
 export default function ArticlePage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const id = Number(params.id);
 
   const [article, setArticle] = useState<Article | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function ArticlePage() {
   useEffect(() => {
     async function fetchArticle() {
       try {
-        const res = await getArticleBySlug(slug);
+        const res = await getArticleByID(id);
         if (res.success && res.data) {
           setArticle(res.data);
         } else {
@@ -34,7 +34,7 @@ export default function ArticlePage() {
       }
     }
     fetchArticle();
-  }, [slug]);
+  }, [id]);
 
   // Process content to add toc IDs to headings
   const processedContent = useMemo(() => {
@@ -83,15 +83,13 @@ export default function ArticlePage() {
       {/* Article Header */}
       <header className="relative py-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-cyber" />
-        {article.coverImage && (
-          <div className="absolute inset-0 opacity-10">
-            <img
-              src={getMediaUrl(article.coverImage)}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="absolute inset-0 opacity-10">
+          <img
+            src={getCoverUrl(article.coverImage)}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background" />
 
         <div className="container-narrow relative z-10">

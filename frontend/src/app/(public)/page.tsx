@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getArticles } from "@/lib/api/articles";
-import { getMediaUrl } from "@/lib/api/media";
+import { getCoverUrl } from "@/lib/api/media";
 import type { ArticleListItem } from "@/types";
 
 export default function HomePage() {
@@ -99,24 +99,16 @@ export default function HomePage() {
               {/* Featured (first article) */}
               {articles.length > 0 && (
                 <Link
-                  href={`/articles/${articles[0].slug}`}
+                  href={`/articles/${articles[0].id}`}
                   className="block mb-8"
                 >
                   <article className="card-glow p-0 overflow-hidden grid grid-cols-1 md:grid-cols-2">
                     <div className="aspect-video md:aspect-auto bg-background relative">
-                      {articles[0].coverImage ? (
-                        <img
-                          src={getMediaUrl(articles[0].coverImage)}
-                          alt={articles[0].title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full min-h-[250px] flex items-center justify-center bg-gradient-cyber">
-                          <span className="text-4xl text-primary/30 font-mono">
-                            {"</>"}
-                          </span>
-                        </div>
-                      )}
+                      <img
+                        src={getCoverUrl(articles[0].coverImage)}
+                        alt={articles[0].title}
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-surface/50 hidden md:block" />
                     </div>
                     <div className="p-8 flex flex-col justify-center">
@@ -193,22 +185,14 @@ export default function HomePage() {
 
 function ArticleCard({ article }: { article: ArticleListItem }) {
   return (
-    <Link href={`/articles/${article.slug}`}>
+    <Link href={`/articles/${article.id}`}>
       <article className="card-glow h-full flex flex-col p-0 overflow-hidden group">
         <div className="aspect-video bg-background relative overflow-hidden">
-          {article.coverImage ? (
-            <img
-              src={getMediaUrl(article.coverImage)}
-              alt={article.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-cyber">
-              <span className="text-2xl text-primary/20 font-mono">
-                {"</>"}
-              </span>
-            </div>
-          )}
+          <img
+            src={getCoverUrl(article.coverImage)}
+            alt={article.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
         </div>
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-3">

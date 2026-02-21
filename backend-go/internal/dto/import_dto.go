@@ -43,6 +43,7 @@ type ImportArticleItem struct {
 // ImportArticlesRequest 批量匯入文章
 type ImportArticlesRequest struct {
 	Articles []ImportArticleItem `json:"articles" binding:"required,min=1"`
+	Update   bool                `json:"update"` // true = slug 已存在時更新 content（預設跳過）
 }
 
 // ── 批量匯入 Response ──────────────────────────────────────────

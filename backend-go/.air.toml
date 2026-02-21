@@ -1,0 +1,23 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/server ./cmd/server/main.go"
+  bin = "./tmp/server"
+  full_bin = "./tmp/server"
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "vendor", "uploads"]
+  delay = 500          # 檔案變更後等 500ms 再重建（避免多檔同時存檔重複觸發）
+  stop_on_error = true # 編譯失敗不啟動舊版
+
+[log]
+  time = false
+
+[color]
+  main    = "magenta"
+  watcher = "cyan"
+  build   = "yellow"
+  runner  = "green"
+
+[misc]
+  clean_on_exit = true

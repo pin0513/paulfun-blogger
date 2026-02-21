@@ -120,7 +120,7 @@ func (s *ImportService) ImportArticles(req dto.ImportArticlesRequest, authorID u
 	tagMap := s.buildTagSlugMap()
 
 	for _, item := range req.Articles {
-		result, err := s.importOneArticle(item, authorID, catMap, tagMap)
+		result, err := s.importOneArticle(item, authorID, catMap, tagMap, req.Update)
 		if err != nil {
 			resp.Failed++
 			resp.Items = append(resp.Items, dto.ImportArticleResult{
@@ -142,12 +142,13 @@ func (s *ImportService) ImportArticles(req dto.ImportArticlesRequest, authorID u
 	return resp, nil
 }
 
-// importOneArticle 匯入單篇文章。slug 已存在則跳過；否則建立（可選發佈）。
+// importOneArticle 匯入單篇文章。slug 已存在時：update=true 則更新 content；否則跳過。
 func (s *ImportService) importOneArticle(
 	item dto.ImportArticleItem,
 	authorID uint,
 	catMap map[string]uint,
 	tagMap map[string]uint,
+	update bool,
 ) (dto.ImportArticleResult, error) {
 
 	slug := item.Slug
@@ -158,6 +159,21 @@ func (s *ImportService) importOneArticle(
 	// slug 去重
 	var existing models.Article
 	if err := s.db.Where("slug = ?", slug).First(&existing).Error; err == nil {
+		if update {
+			// 更新已存在文章的 content 與 summary
+			updates := map[string]interface{}{}
+			if item.Content != nil {
+				updates["content"] = *item.Content
+			}
+			if item.Summary != nil {
+				updates["summary"] = *item.Summary
+			}
+			if len(updates) > 0 {
+				if err := s.db.Model(&existing).Updates(updates).Error; err != nil {
+					return dto.ImportArticleResult{}, fmt.Errorf("更新文章 %q 失敗: %w", item.Title, err)
+				}
+			}
+		}
 		return dto.ImportArticleResult{
 			Title:   item.Title,
 			Slug:    slug,

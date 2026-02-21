@@ -11,6 +11,8 @@ export default function ArticlesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [descending, setDescending] = useState(true);
 
   const fetchArticles = async () => {
     setIsLoading(true);
@@ -19,6 +21,8 @@ export default function ArticlesPage() {
         page,
         pageSize: 10,
         status: statusFilter || undefined,
+        sortBy,
+        descending,
       });
       if (response.success && response.data) {
         setArticles(response.data.items);
@@ -33,7 +37,7 @@ export default function ArticlesPage() {
 
   useEffect(() => {
     fetchArticles();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, sortBy, descending]);
 
   const handleDelete = async (id: number) => {
     if (!confirm("確定要刪除這篇文章嗎？")) return;
@@ -70,6 +74,16 @@ export default function ArticlesPage() {
     }
   };
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setDescending((d) => !d);
+    } else {
+      setSortBy(field);
+      setDescending(true);
+    }
+    setPage(1);
+  };
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       published: "bg-green-900/50 text-green-400 border border-green-500/30",
@@ -103,7 +117,7 @@ export default function ArticlesPage() {
       <div className="mb-6 flex gap-4">
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="input w-40"
         >
           <option value="">所有狀態</option>
@@ -111,6 +125,23 @@ export default function ArticlesPage() {
           <option value="published">已發佈</option>
           <option value="scheduled">排程</option>
         </select>
+        <select
+          value={sortBy}
+          onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+          className="input w-40"
+        >
+          <option value="createdAt">建立時間</option>
+          <option value="publishedAt">發佈時間</option>
+          <option value="title">標題</option>
+          <option value="viewCount">瀏覽次數</option>
+        </select>
+        <button
+          onClick={() => setDescending((d) => !d)}
+          className="btn btn-outline px-3"
+          title={descending ? "目前：新到舊" : "目前：舊到新"}
+        >
+          {descending ? "↓ 降序" : "↑ 升序"}
+        </button>
       </div>
 
       {/* Articles List */}
@@ -131,21 +162,15 @@ export default function ArticlesPage() {
           <table className="w-full">
             <thead className="bg-surface">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">
-                  標題
-                </th>
+                <SortableHeader field="title" label="標題" currentSort={sortBy} descending={descending} onSort={handleSort} />
                 <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">
                   狀態
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">
                   分類
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">
-                  瀏覽
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">
-                  發佈時間
-                </th>
+                <SortableHeader field="viewCount" label="瀏覽" currentSort={sortBy} descending={descending} onSort={handleSort} />
+                <SortableHeader field="publishedAt" label="發佈時間" currentSort={sortBy} descending={descending} onSort={handleSort} />
                 <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">
                   操作
                 </th>
@@ -235,5 +260,36 @@ export default function ArticlesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SortableHeader({
+  field,
+  label,
+  currentSort,
+  descending,
+  onSort,
+}: {
+  field: string;
+  label: string;
+  currentSort: string;
+  descending: boolean;
+  onSort: (field: string) => void;
+}) {
+  const isActive = currentSort === field;
+  return (
+    <th
+      className="px-4 py-3 text-left text-sm font-medium text-text-muted cursor-pointer hover:text-text select-none"
+      onClick={() => onSort(field)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {isActive ? (
+          <span className="text-primary">{descending ? "↓" : "↑"}</span>
+        ) : (
+          <span className="opacity-30">↕</span>
+        )}
+      </span>
+    </th>
   );
 }

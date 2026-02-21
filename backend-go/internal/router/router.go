@@ -43,13 +43,13 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 	}
 
 	// ── 前台公開 API ──────────────────────────────────────
-	// 注意：固定路徑（categories, tags）必須在 /:slug 之前（Gin 規則）
+	// 注意：固定路徑（categories, tags）必須在 /:id 之前（Gin 規則）
 	articles := api.Group("/articles")
 	{
 		articles.GET("", h.Article.ListArticles)
 		articles.GET("/categories", h.Article.ListCategories)
 		articles.GET("/tags", h.Article.ListTags)
-		articles.GET("/:slug", h.Article.GetArticleBySlug)
+		articles.GET("/:id", h.Article.GetArticleByID)
 	}
 
 	// ── 後台 API（需要認證）──────────────────────────────────

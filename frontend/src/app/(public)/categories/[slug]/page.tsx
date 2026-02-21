@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getArticles, getCategories } from "@/lib/api/articles";
-import { getMediaUrl } from "@/lib/api/media";
+import { getCoverUrl } from "@/lib/api/media";
 import type { ArticleListItem } from "@/types";
 
 interface Category {
@@ -113,22 +113,14 @@ export default function CategoryPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => (
-              <Link key={article.id} href={`/articles/${article.slug}`}>
+              <Link key={article.id} href={`/articles/${article.id}`}>
                 <article className="card-glow h-full flex flex-col p-0 overflow-hidden group">
                   <div className="aspect-video bg-background relative overflow-hidden">
-                    {article.coverImage ? (
-                      <img
-                        src={getMediaUrl(article.coverImage)}
-                        alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-cyber">
-                        <span className="text-2xl text-primary/20 font-mono">
-                          {"</>"}
-                        </span>
-                      </div>
-                    )}
+                    <img
+                      src={getCoverUrl(article.coverImage)}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <h3 className="text-lg font-heading font-semibold text-text mb-2 group-hover:text-primary transition-colors line-clamp-2">

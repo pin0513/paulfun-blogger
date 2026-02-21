@@ -54,11 +54,15 @@ func (h *ArticleHandler) ListTags(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.Ok(tags, ""))
 }
 
-// GET /api/articles/:slug
-func (h *ArticleHandler) GetArticleBySlug(c *gin.Context) {
-	slug := c.Param("slug")
+// GET /api/articles/:id
+func (h *ArticleHandler) GetArticleByID(c *gin.Context) {
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("無效的文章 ID"))
+		return
+	}
 
-	article, err := h.svc.GetArticleBySlug(slug)
+	article, err := h.svc.GetPublishedArticleByID(id)
 	if err != nil {
 		handleErr(c, err, "文章不存在")
 		return

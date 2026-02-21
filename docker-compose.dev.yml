@@ -1,6 +1,7 @@
-# 開發環境：只啟動 PostgreSQL
-# 使用方式: docker-compose -f docker-compose.dev.yml up -d
-# Go server 在本機執行：cd backend-go && go run ./cmd/server/main.go
+# 開發環境：PostgreSQL + Go server（air 熱啟動）
+# 使用方式:
+#   docker-compose -f docker-compose.dev.yml up
+#   → Go server 監聽 :5266，修改 .go 檔自動重新編譯
 
 services:
   postgres:
@@ -11,7 +12,7 @@ services:
       - POSTGRES_PASSWORD=YourStrong!Passw0rd
       - POSTGRES_DB=paulfun_blogger
     ports:
-      - "5433:5432"   # 5433 避免與本機 postgres 衝突
+      - "5433:5432"
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:
@@ -21,6 +22,35 @@ services:
       retries: 5
     restart: unless-stopped
 
+  go-server:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile.dev
+    container_name: paulfun-go-server-dev
+    ports:
+      - "5266:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=YourStrong!Passw0rd
+      - DB_NAME=paulfun_blogger
+      - DB_SSLMODE=disable
+      - JWT_SECRET=change-me-to-a-long-random-secret-key-in-production
+      - JWT_EXPIRE_HOURS=24
+      - PORT=8080
+      - BASE_URL=http://localhost:5266
+      - UPLOAD_DIR=./uploads
+    volumes:
+      - ./backend-go:/app          # 原始碼掛載（air 監控此目錄）
+      - go-pkg-cache:/root/go/pkg  # Go module cache（加速重建）
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres-dev-data:
+    driver: local
+  go-pkg-cache:
     driver: local

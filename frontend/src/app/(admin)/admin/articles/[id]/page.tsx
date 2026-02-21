@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import {
   getAdminArticle,
   updateArticle,
+  deleteArticle,
   getCategories,
   getTags,
   publishArticle,
@@ -28,9 +29,11 @@ interface Tag {
 
 export default function EditArticlePage() {
   const params = useParams();
+  const router = useRouter();
   const articleId = Number(params.id);
 
   const [article, setArticle] = useState<Article | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
@@ -154,6 +157,33 @@ export default function EditArticlePage() {
       console.error("Failed to unpublish article:", error);
       setError("取消發佈失敗");
     }
+  };
+
+  const handleDelete = async () => {
+    if (!article) return;
+    if (!window.confirm(`確定要刪除「${article.title}」？此操作無法復原。`)) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await deleteArticle(article.id);
+      if (response.success) {
+        router.push("/admin/articles");
+      } else {
+        setError("刪除失敗");
+        setIsDeleting(false);
+      }
+    } catch {
+      setError("刪除時發生錯誤");
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    router.push("/admin/articles");
+  };
+
+  const handlePreview = () => {
+    window.open(`/articles/${articleId}`, "_blank");
   };
 
   const handleTagToggle = (tagId: number) => {
@@ -281,22 +311,24 @@ export default function EditArticlePage() {
           <div className="space-y-6">
             {/* Actions */}
             <div className="card">
-              <h3 className="font-medium text-text mb-4">發佈</h3>
-              <div className="space-y-3">
+              <h3 className="font-medium text-text mb-4">操作</h3>
+              <div className="space-y-2">
+                {/* 儲存 */}
                 <button
                   type="submit"
                   className="btn btn-primary w-full"
-                  disabled={isSaving}
+                  disabled={isSaving || isDeleting}
                 >
                   {isSaving ? "儲存中..." : "儲存變更"}
                 </button>
 
-                {article.status === "draft" ? (
+                {/* 發佈 / 取消發佈 */}
+                {article.status === "draft" || article.status === "scheduled" ? (
                   <button
                     type="button"
                     onClick={handlePublish}
-                    className="btn btn-outline w-full text-green-600 border-green-600 hover:bg-green-50"
-                    disabled={isSaving}
+                    className="btn w-full bg-green-900/30 text-green-400 border border-green-500/50 hover:bg-green-900/60"
+                    disabled={isSaving || isDeleting}
                   >
                     發佈文章
                   </button>
@@ -304,12 +336,45 @@ export default function EditArticlePage() {
                   <button
                     type="button"
                     onClick={handleUnpublish}
-                    className="btn btn-outline w-full text-orange-600 border-orange-600 hover:bg-orange-50"
-                    disabled={isSaving}
+                    className="btn w-full bg-orange-900/30 text-orange-400 border border-orange-500/50 hover:bg-orange-900/60"
+                    disabled={isSaving || isDeleting}
                   >
-                    取消發佈
+                    取消發佈（轉草稿）
                   </button>
                 ) : null}
+
+                {/* 預覽（新分頁，無需儲存）*/}
+                <button
+                  type="button"
+                  onClick={handlePreview}
+                  className="btn btn-outline w-full flex items-center justify-center gap-2"
+                  disabled={isDeleting}
+                >
+                  <span>預覽文章</span>
+                  <span className="text-xs opacity-60">↗</span>
+                </button>
+
+                {/* 取消 */}
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="btn btn-outline w-full text-text-muted"
+                  disabled={isSaving || isDeleting}
+                >
+                  取消（返回列表）
+                </button>
+
+                {/* 刪除 */}
+                <div className="pt-2 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="btn w-full bg-red-900/30 text-red-400 border border-red-500/50 hover:bg-red-900/60"
+                    disabled={isSaving || isDeleting}
+                  >
+                    {isDeleting ? "刪除中..." : "刪除文章"}
+                  </button>
+                </div>
               </div>
 
               {article.publishedAt && (

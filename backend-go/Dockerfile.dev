@@ -1,0 +1,13 @@
+FROM golang:1.23-alpine
+
+# 安裝 air（熱啟動工具），指定相容版本
+RUN go install github.com/air-verse/air@v1.61.7
+
+WORKDIR /app
+
+# 預先下載依賴（利用 Docker layer cache）
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 原始碼以 volume 掛載，container 啟動後由 air 監控
+CMD ["air", "-c", ".air.toml"]

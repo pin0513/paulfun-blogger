@@ -49,6 +49,10 @@ coverage/
 *.coverage
 TestResults/
 
+# Uploads (媒體/圖片由部署流程處理)
+backend-go/uploads/
+backend-go/tmp/
+
 # Misc
 *.tmp
 *.temp

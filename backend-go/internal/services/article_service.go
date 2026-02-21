@@ -111,12 +111,12 @@ func (s *ArticleService) GetArticleByID(id uint) (*dto.ArticleDto, error) {
 	return &d, nil
 }
 
-// GetArticleBySlug 取得已發佈文章（前台使用）。
-func (s *ArticleService) GetArticleBySlug(slug string) (*dto.ArticleDto, error) {
+// GetPublishedArticleByID 取得已發佈文章（前台使用，以 ID 查詢）。
+func (s *ArticleService) GetPublishedArticleByID(id uint) (*dto.ArticleDto, error) {
 	now := time.Now().UTC()
 	var article models.Article
 	if err := s.db.Preload("Author").Preload("Category").Preload("Tags").
-		Where("slug = ? AND status = ? AND published_at <= ?", slug, "published", now).
+		Where("id = ? AND status = ? AND published_at <= ?", id, "published", now).
 		First(&article).Error; err != nil {
 		return nil, apierror.ErrNotFound
 	}
@@ -275,20 +275,42 @@ func (s *ArticleService) IncrementViewCount(id uint) {
 		UpdateColumn("view_count", gorm.Expr("view_count + 1"))
 }
 
-// GetCategories 取得所有分類。
+// GetCategories 取得所有分類（含已發佈文章數）。
 func (s *ArticleService) GetCategories() ([]dto.CategoryDto, error) {
-	var cats []models.Category
-	if err := s.db.Order("sort_order ASC").Find(&cats).Error; err != nil {
+	type catWithCount struct {
+		ID           uint
+		Name         string
+		Slug         string
+		ParentID     *uint
+		SortOrder    int
+		ArticleCount int
+	}
+
+	now := time.Now().UTC()
+	var rows []catWithCount
+	if err := s.db.Raw(`
+		SELECT c.id, c.name, c.slug, c.parent_id, c.sort_order,
+		       COUNT(a.id) AS article_count
+		FROM categories c
+		LEFT JOIN articles a
+		       ON a.category_id = c.id
+		          AND a.status = 'published'
+		          AND a.published_at <= ?
+		GROUP BY c.id, c.name, c.slug, c.parent_id, c.sort_order
+		ORDER BY c.sort_order ASC
+	`, now).Scan(&rows).Error; err != nil {
 		return nil, err
 	}
-	result := make([]dto.CategoryDto, len(cats))
-	for i, c := range cats {
+
+	result := make([]dto.CategoryDto, len(rows))
+	for i, r := range rows {
 		result[i] = dto.CategoryDto{
-			ID:        c.ID,
-			Name:      c.Name,
-			Slug:      c.Slug,
-			ParentID:  c.ParentID,
-			SortOrder: c.SortOrder,
+			ID:           r.ID,
+			Name:         r.Name,
+			Slug:         r.Slug,
+			ParentID:     r.ParentID,
+			SortOrder:    r.SortOrder,
+			ArticleCount: r.ArticleCount,
 		}
 	}
 	return result, nil
