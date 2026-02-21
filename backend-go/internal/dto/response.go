@@ -7,12 +7,15 @@ type ApiResponse[T any] struct {
 	Message string `json:"message"`
 }
 
-// PagedResponse 泛型分頁回應結構
+// PagedResponse 泛型分頁回應結構（與前端 PagedResponse<T> 完全對應）
 type PagedResponse[T any] struct {
-	Items      []T `json:"items"`
-	TotalCount int `json:"totalCount"`
-	Page       int `json:"page"`
-	PageSize   int `json:"pageSize"`
+	Items           []T  `json:"items"`
+	TotalCount      int  `json:"totalCount"`
+	Page            int  `json:"page"`
+	PageSize        int  `json:"pageSize"`
+	TotalPages      int  `json:"totalPages"`
+	HasPreviousPage bool `json:"hasPreviousPage"`
+	HasNextPage     bool `json:"hasNextPage"`
 }
 
 func Ok[T any](data T, message string) ApiResponse[T] {

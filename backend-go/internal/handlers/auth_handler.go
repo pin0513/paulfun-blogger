@@ -1,16 +1,19 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/paulhuang/paulfun-blogger/internal/apierror"
 	"github.com/paulhuang/paulfun-blogger/internal/dto"
 	"github.com/paulhuang/paulfun-blogger/internal/middleware"
 	"github.com/paulhuang/paulfun-blogger/internal/services"
 )
 
+// AuthHandler 處理認證相關 API（登入、註冊、取得目前使用者）。
 type AuthHandler struct {
 	svc *services.AuthService
 }
@@ -27,18 +30,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.Login(req)
+	authResp, err := h.svc.Login(req)
 	if err != nil {
+		if errors.Is(err, apierror.ErrUnauthorized) {
+			// 使用 422 而非 401，避免前端 401 interceptor 攔截並強制跳轉 /login
+			c.JSON(http.StatusUnprocessableEntity, dto.Fail[any]("帳號或密碼錯誤"))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, dto.Fail[any]("伺服器錯誤"))
 		return
 	}
 
-	if !resp.Success {
-		c.JSON(http.StatusUnauthorized, resp)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, dto.Ok(authResp, "登入成功"))
 }
 
 // POST /api/auth/register
@@ -49,18 +52,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.Register(req)
+	authResp, err := h.svc.Register(req)
 	if err != nil {
+		if errors.Is(err, apierror.ErrConflict) {
+			c.JSON(http.StatusConflict, dto.Fail[any]("此 Email 已被註冊"))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, dto.Fail[any]("伺服器錯誤"))
 		return
 	}
 
-	if !resp.Success {
-		c.JSON(http.StatusConflict, resp)
-		return
-	}
-
-	c.JSON(http.StatusCreated, resp)
+	c.JSON(http.StatusCreated, dto.Ok(authResp, "註冊成功"))
 }
 
 // GET /api/auth/me
@@ -80,7 +82,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 	user, err := h.svc.GetUserByID(uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, dto.Fail[any]("使用者不存在"))
+		handleErr(c, err, "使用者不存在")
 		return
 	}
 

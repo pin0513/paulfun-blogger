@@ -33,7 +33,9 @@ export function ProtectedRoute({
     }
   }, [isAuthenticated, isLoading, canWrite, requireWriter, router]);
 
-  if (isLoading) {
+  // 僅在「尚未認證」時顯示 spinner；已認證後即使 isLoading 重置也不 unmount children，
+  // 避免 AuthProvider 重新驗證時造成表單元素瞬間 detach。
+  if (isLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

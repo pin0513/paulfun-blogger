@@ -7,11 +7,13 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/paulhuang/paulfun-blogger/internal/apierror"
 	"github.com/paulhuang/paulfun-blogger/internal/dto"
 	"github.com/paulhuang/paulfun-blogger/internal/models"
 	"gorm.io/gorm"
 )
 
+// ArticleService 處理文章相關業務邏輯。
 type ArticleService struct {
 	db *gorm.DB
 }
@@ -20,13 +22,14 @@ func NewArticleService(db *gorm.DB) *ArticleService {
 	return &ArticleService{db: db}
 }
 
+// GetArticles 查詢文章列表（分頁 + 篩選）。
+// includeUnpublished=true 用於後台；false 用於前台（僅顯示已發佈）。
 func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublished bool) (dto.PagedResponse[dto.ArticleListItemDto], error) {
 	query := s.db.Model(&models.Article{}).
 		Preload("Author").
 		Preload("Category").
 		Preload("Tags")
 
-	// Status filter
 	if !includeUnpublished {
 		now := time.Now().UTC()
 		query = query.Where("status = ? AND published_at <= ?", "published", now)
@@ -34,18 +37,15 @@ func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublishe
 		query = query.Where("status = ?", q.Status)
 	}
 
-	// CategoryID filter
 	if q.CategoryID != nil {
 		query = query.Where("category_id = ?", *q.CategoryID)
 	}
 
-	// TagID filter（through join table）
 	if q.TagID != nil {
 		query = query.Joins("JOIN article_tags ON article_tags.article_id = articles.id").
 			Where("article_tags.tag_id = ?", *q.TagID)
 	}
 
-	// Search
 	if q.Search != "" {
 		like := "%" + strings.ToLower(q.Search) + "%"
 		query = query.Where("LOWER(title) LIKE ? OR LOWER(summary) LIKE ?", like, like)
@@ -56,7 +56,6 @@ func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublishe
 		return dto.PagedResponse[dto.ArticleListItemDto]{}, err
 	}
 
-	// Sorting
 	sortBy := strings.ToLower(q.GetSortBy())
 	dir := "DESC"
 	if !q.Descending {
@@ -86,37 +85,47 @@ func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublishe
 		items[i] = mapToListItemDto(a)
 	}
 
+	totalPages := (int(totalCount) + pageSize - 1) / pageSize
+	if totalPages == 0 {
+		totalPages = 1
+	}
 	return dto.PagedResponse[dto.ArticleListItemDto]{
-		Items:      items,
-		TotalCount: int(totalCount),
-		Page:       page,
-		PageSize:   pageSize,
+		Items:           items,
+		TotalCount:      int(totalCount),
+		Page:            page,
+		PageSize:        pageSize,
+		TotalPages:      totalPages,
+		HasPreviousPage: page > 1,
+		HasNextPage:     page < totalPages,
 	}, nil
 }
 
+// GetArticleByID 取得單篇文章（後台使用，不限 status）。
 func (s *ArticleService) GetArticleByID(id uint) (*dto.ArticleDto, error) {
 	var article models.Article
 	if err := s.db.Preload("Author").Preload("Category").Preload("Tags").
 		First(&article, id).Error; err != nil {
-		return nil, err
+		return nil, apierror.ErrNotFound
 	}
 	d := mapToDto(article)
 	return &d, nil
 }
 
+// GetArticleBySlug 取得已發佈文章（前台使用）。
 func (s *ArticleService) GetArticleBySlug(slug string) (*dto.ArticleDto, error) {
 	now := time.Now().UTC()
 	var article models.Article
 	if err := s.db.Preload("Author").Preload("Category").Preload("Tags").
 		Where("slug = ? AND status = ? AND published_at <= ?", slug, "published", now).
 		First(&article).Error; err != nil {
-		return nil, err
+		return nil, apierror.ErrNotFound
 	}
 	d := mapToDto(article)
 	return &d, nil
 }
 
-func (s *ArticleService) CreateArticle(req dto.CreateArticleRequest, authorID uint) (dto.ApiResponse[dto.ArticleDto], error) {
+// CreateArticle 建立草稿文章。
+func (s *ArticleService) CreateArticle(req dto.CreateArticleRequest, authorID uint) (*dto.ArticleDto, error) {
 	slug := generateSlug(req.Title)
 	base := slug
 	for i := 1; ; i++ {
@@ -146,24 +155,23 @@ func (s *ArticleService) CreateArticle(req dto.CreateArticleRequest, authorID ui
 	}
 
 	if err := s.db.Create(&article).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("建立文章失敗"), err
+		return nil, err
 	}
 
-	// Reload with associations
 	s.db.Preload("Author").Preload("Category").Preload("Tags").First(&article, article.ID)
-	return dto.Ok(mapToDto(article), "文章建立成功"), nil
+	d := mapToDto(article)
+	return &d, nil
 }
 
-func (s *ArticleService) UpdateArticle(id uint, req dto.UpdateArticleRequest, userID uint) (dto.ApiResponse[dto.ArticleDto], error) {
+// UpdateArticle 更新文章內容（僅作者或 admin 可操作）。
+func (s *ArticleService) UpdateArticle(id uint, req dto.UpdateArticleRequest, userID uint) (*dto.ArticleDto, error) {
 	var article models.Article
 	if err := s.db.Preload("Tags").First(&article, id).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("文章不存在"), nil
+		return nil, apierror.ErrNotFound
 	}
 
-	var user models.User
-	s.db.First(&user, userID)
-	if article.AuthorID != userID && user.Role != "admin" {
-		return dto.Fail[dto.ArticleDto]("沒有權限修改此文章"), nil
+	if err := s.checkOwnerOrAdmin(article.AuthorID, userID); err != nil {
+		return nil, err
 	}
 
 	now := time.Now().UTC()
@@ -183,42 +191,40 @@ func (s *ArticleService) UpdateArticle(id uint, req dto.UpdateArticleRequest, us
 	}
 
 	if err := s.db.Save(&article).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("更新失敗"), err
+		return nil, err
 	}
 
 	s.db.Preload("Author").Preload("Category").Preload("Tags").First(&article, article.ID)
-	return dto.Ok(mapToDto(article), "文章更新成功"), nil
+	d := mapToDto(article)
+	return &d, nil
 }
 
-func (s *ArticleService) DeleteArticle(id uint, userID uint) (dto.ApiResponse[bool], error) {
+// DeleteArticle 刪除文章（僅作者或 admin 可操作）。
+func (s *ArticleService) DeleteArticle(id uint, userID uint) error {
 	var article models.Article
 	if err := s.db.First(&article, id).Error; err != nil {
-		return dto.Fail[bool]("文章不存在"), nil
+		return apierror.ErrNotFound
 	}
 
-	var user models.User
-	s.db.First(&user, userID)
-	if article.AuthorID != userID && user.Role != "admin" {
-		return dto.Fail[bool]("沒有權限刪除此文章"), nil
+	if err := s.checkOwnerOrAdmin(article.AuthorID, userID); err != nil {
+		return err
 	}
 
 	if err := s.db.Delete(&article).Error; err != nil {
-		return dto.Fail[bool]("刪除失敗"), err
+		return err
 	}
-
-	return dto.Ok(true, "文章刪除成功"), nil
+	return nil
 }
 
-func (s *ArticleService) PublishArticle(id uint, req *dto.PublishArticleRequest, userID uint) (dto.ApiResponse[dto.ArticleDto], error) {
+// PublishArticle 發佈文章（立即或排程）。
+func (s *ArticleService) PublishArticle(id uint, req *dto.PublishArticleRequest, userID uint) (*dto.ArticleDto, error) {
 	var article models.Article
 	if err := s.db.Preload("Author").Preload("Category").Preload("Tags").First(&article, id).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("文章不存在"), nil
+		return nil, apierror.ErrNotFound
 	}
 
-	var user models.User
-	s.db.First(&user, userID)
-	if article.AuthorID != userID && user.Role != "admin" {
-		return dto.Fail[dto.ArticleDto]("沒有權限發佈此文章"), nil
+	if err := s.checkOwnerOrAdmin(article.AuthorID, userID); err != nil {
+		return nil, err
 	}
 
 	now := time.Now().UTC()
@@ -232,22 +238,22 @@ func (s *ArticleService) PublishArticle(id uint, req *dto.PublishArticleRequest,
 	article.UpdatedAt = &now
 
 	if err := s.db.Save(&article).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("發佈失敗"), err
+		return nil, err
 	}
 
-	return dto.Ok(mapToDto(article), "文章發佈成功"), nil
+	d := mapToDto(article)
+	return &d, nil
 }
 
-func (s *ArticleService) UnpublishArticle(id uint, userID uint) (dto.ApiResponse[dto.ArticleDto], error) {
+// UnpublishArticle 將文章回退為草稿。
+func (s *ArticleService) UnpublishArticle(id uint, userID uint) (*dto.ArticleDto, error) {
 	var article models.Article
 	if err := s.db.Preload("Author").Preload("Category").Preload("Tags").First(&article, id).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("文章不存在"), nil
+		return nil, apierror.ErrNotFound
 	}
 
-	var user models.User
-	s.db.First(&user, userID)
-	if article.AuthorID != userID && user.Role != "admin" {
-		return dto.Fail[dto.ArticleDto]("沒有權限操作此文章"), nil
+	if err := s.checkOwnerOrAdmin(article.AuthorID, userID); err != nil {
+		return nil, err
 	}
 
 	now := time.Now().UTC()
@@ -256,16 +262,20 @@ func (s *ArticleService) UnpublishArticle(id uint, userID uint) (dto.ApiResponse
 	article.UpdatedAt = &now
 
 	if err := s.db.Save(&article).Error; err != nil {
-		return dto.Fail[dto.ArticleDto]("操作失敗"), err
+		return nil, err
 	}
 
-	return dto.Ok(mapToDto(article), "文章已取消發佈"), nil
+	d := mapToDto(article)
+	return &d, nil
 }
 
+// IncrementViewCount 非同步更新瀏覽數（fire-and-forget）。
 func (s *ArticleService) IncrementViewCount(id uint) {
-	s.db.Model(&models.Article{}).Where("id = ?", id).UpdateColumn("view_count", gorm.Expr("view_count + 1"))
+	s.db.Model(&models.Article{}).Where("id = ?", id).
+		UpdateColumn("view_count", gorm.Expr("view_count + 1"))
 }
 
+// GetCategories 取得所有分類。
 func (s *ArticleService) GetCategories() ([]dto.CategoryDto, error) {
 	var cats []models.Category
 	if err := s.db.Order("sort_order ASC").Find(&cats).Error; err != nil {
@@ -273,11 +283,18 @@ func (s *ArticleService) GetCategories() ([]dto.CategoryDto, error) {
 	}
 	result := make([]dto.CategoryDto, len(cats))
 	for i, c := range cats {
-		result[i] = dto.CategoryDto{ID: c.ID, Name: c.Name, Slug: c.Slug, ParentID: c.ParentID, SortOrder: c.SortOrder}
+		result[i] = dto.CategoryDto{
+			ID:        c.ID,
+			Name:      c.Name,
+			Slug:      c.Slug,
+			ParentID:  c.ParentID,
+			SortOrder: c.SortOrder,
+		}
 	}
 	return result, nil
 }
 
+// GetTags 取得所有標籤。
 func (s *ArticleService) GetTags() ([]dto.TagDto, error) {
 	var tags []models.Tag
 	if err := s.db.Find(&tags).Error; err != nil {
@@ -288,6 +305,21 @@ func (s *ArticleService) GetTags() ([]dto.TagDto, error) {
 		result[i] = dto.TagDto{ID: t.ID, Name: t.Name, Slug: t.Slug}
 	}
 	return result, nil
+}
+
+// ── 內部 helpers ──────────────────────────────────────────────────────────
+
+// checkOwnerOrAdmin 確認 userID 是文章作者或系統管理員。
+func (s *ArticleService) checkOwnerOrAdmin(ownerID, requesterID uint) error {
+	if ownerID == requesterID {
+		return nil
+	}
+	var user models.User
+	s.db.Select("role").First(&user, requesterID)
+	if user.Role == "admin" {
+		return nil
+	}
+	return apierror.ErrForbidden
 }
 
 // ── slug 生成 ──────────────────────────────────────────────────────────────
@@ -303,7 +335,6 @@ func generateSlug(title string) string {
 	slug = multiDashRe.ReplaceAllString(slug, "-")
 	slug = strings.Trim(slug, "-")
 
-	// 移除非 ASCII + 非中文字符（保留英數、CJK、連字符）
 	var sb strings.Builder
 	for _, r := range slug {
 		if r == '-' || unicode.IsLetter(r) || unicode.IsDigit(r) {
@@ -328,7 +359,13 @@ func mapToDto(a models.Article) dto.ArticleDto {
 
 	var cat *dto.CategoryDto
 	if a.Category != nil {
-		cat = &dto.CategoryDto{ID: a.Category.ID, Name: a.Category.Name, Slug: a.Category.Slug, ParentID: a.Category.ParentID, SortOrder: a.Category.SortOrder}
+		cat = &dto.CategoryDto{
+			ID:        a.Category.ID,
+			Name:      a.Category.Name,
+			Slug:      a.Category.Slug,
+			ParentID:  a.Category.ParentID,
+			SortOrder: a.Category.SortOrder,
+		}
 	}
 
 	return dto.ArticleDto{
@@ -359,7 +396,13 @@ func mapToListItemDto(a models.Article) dto.ArticleListItemDto {
 
 	var cat *dto.CategoryDto
 	if a.Category != nil {
-		cat = &dto.CategoryDto{ID: a.Category.ID, Name: a.Category.Name, Slug: a.Category.Slug, ParentID: a.Category.ParentID, SortOrder: a.Category.SortOrder}
+		cat = &dto.CategoryDto{
+			ID:        a.Category.ID,
+			Name:      a.Category.Name,
+			Slug:      a.Category.Slug,
+			ParentID:  a.Category.ParentID,
+			SortOrder: a.Category.SortOrder,
+		}
 	}
 
 	return dto.ArticleListItemDto{

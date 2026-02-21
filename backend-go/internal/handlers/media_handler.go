@@ -8,6 +8,7 @@ import (
 	"github.com/paulhuang/paulfun-blogger/internal/services"
 )
 
+// MediaHandler 處理後台媒體管理 API。
 type MediaHandler struct {
 	svc *services.MediaService
 }
@@ -43,7 +44,7 @@ func (h *MediaHandler) GetMedia(c *gin.Context) {
 
 	media, err := h.svc.GetMediaByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, dto.Fail[any]("檔案不存在"))
+		handleErr(c, err, "查詢失敗")
 		return
 	}
 
@@ -64,18 +65,13 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.Upload(file, userID)
+	result, err := h.svc.Upload(file, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.Fail[any]("上傳失敗"))
+		handleErr(c, err, "上傳失敗")
 		return
 	}
 
-	if !resp.Success {
-		c.JSON(http.StatusBadRequest, resp)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, dto.Ok(result, "上傳成功"))
 }
 
 // DELETE /api/admin/media/:id
@@ -92,16 +88,10 @@ func (h *MediaHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.Delete(id, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.Fail[any]("刪除失敗"))
+	if err := h.svc.Delete(id, userID); err != nil {
+		handleErr(c, err, "刪除失敗")
 		return
 	}
 
-	if !resp.Success {
-		c.JSON(http.StatusForbidden, resp)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, dto.Ok(true, "刪除成功"))
 }

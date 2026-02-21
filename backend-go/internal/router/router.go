@@ -41,12 +41,15 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		auth.GET("/me", middleware.AuthRequired(cfg.JWTSecret), h.Auth.Me)
 	}
 
-	// ── 前台公開 API（固定路徑優先，slug 路徑最後）──────────
-	// 注意：categories 和 tags 必須在 /:slug 之前
-	api.GET("/categories", h.Article.ListCategories)
-	api.GET("/tags", h.Article.ListTags)
-	api.GET("/articles", h.Article.ListArticles)
-	api.GET("/:slug", h.Article.GetArticleBySlug)
+	// ── 前台公開 API ──────────────────────────────────────
+	// 注意：固定路徑（categories, tags）必須在 /:slug 之前（Gin 規則）
+	articles := api.Group("/articles")
+	{
+		articles.GET("", h.Article.ListArticles)
+		articles.GET("/categories", h.Article.ListCategories)
+		articles.GET("/tags", h.Article.ListTags)
+		articles.GET("/:slug", h.Article.GetArticleBySlug)
+	}
 
 	// ── 後台 API（需要認證）──────────────────────────────────
 	admin := api.Group("/admin")

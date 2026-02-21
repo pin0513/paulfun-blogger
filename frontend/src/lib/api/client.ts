@@ -43,7 +43,8 @@ class ApiClient {
   setToken(token: string) {
     this.accessToken = token;
     if (typeof window !== "undefined") {
-      localStorage.setItem("accessToken", token);
+      // 使用 JSON.stringify 與 Jotai atomWithStorage 保持一致，避免 hard navigation 後 auth 失效
+      localStorage.setItem("accessToken", JSON.stringify(token));
     }
   }
 
@@ -56,9 +57,13 @@ class ApiClient {
 
   initializeToken() {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        this.accessToken = token;
+      const stored = localStorage.getItem("accessToken");
+      if (stored) {
+        try {
+          this.accessToken = JSON.parse(stored);
+        } catch {
+          this.accessToken = stored; // 向後相容舊格式
+        }
       }
     }
   }

@@ -21,6 +21,7 @@ export function TiptapEditor({
   placeholder = "開始撰寫你的文章...",
 }: TiptapEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false, // 避免 SSR hydration mismatch
     extensions: [
       StarterKit.configure({
         heading: {
