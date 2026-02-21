@@ -1,27 +1,26 @@
-# 開發環境專用 - 只啟動資料庫
+# 開發環境：只啟動 PostgreSQL
 # 使用方式: docker-compose -f docker-compose.dev.yml up -d
-# 注意: 使用 Azure SQL Edge 以支援 Apple Silicon (ARM64)
-# 注意: port 1434 避免與其他 SQL Server 容器衝突
+# Go server 在本機執行：cd backend-go && go run ./cmd/server/main.go
 
 services:
-  sqlserver:
-    image: mcr.microsoft.com/azure-sql-edge:latest
-    container_name: paulfun-sqlserver-dev
+  postgres:
+    image: postgres:16-alpine
+    container_name: paulfun-postgres-dev
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=YourStrong!Passw0rd
+      - POSTGRES_DB=paulfun_blogger
     ports:
-      - "1434:1433"
+      - "5433:5432"   # 5433 避免與本機 postgres 衝突
     volumes:
-      - sqlserver-dev-data:/var/opt/mssql
+      - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "cat < /dev/tcp/localhost/1433 || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paulfun_blogger"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
     restart: unless-stopped
 
 volumes:
-  sqlserver-dev-data:
+  postgres-dev-data:
     driver: local
