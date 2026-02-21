@@ -24,6 +24,7 @@ func main() {
 	authSvc := services.NewAuthService(database, cfg)
 	articleSvc := services.NewArticleService(database)
 	mediaSvc := services.NewMediaService(database, cfg)
+	importSvc := services.NewImportService(database)
 
 	// 5. 初始化 Handlers
 	h := router.Handlers{
@@ -31,6 +32,7 @@ func main() {
 		Article: handlers.NewArticleHandler(articleSvc),
 		Admin:   handlers.NewAdminHandler(articleSvc),
 		Media:   handlers.NewMediaHandler(mediaSvc),
+		Import:  handlers.NewImportHandler(importSvc),
 	}
 
 	// 6. 設定路由

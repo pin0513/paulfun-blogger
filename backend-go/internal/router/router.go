@@ -14,6 +14,7 @@ type Handlers struct {
 	Article *handlers.ArticleHandler
 	Admin   *handlers.AdminHandler
 	Media   *handlers.MediaHandler
+	Import  *handlers.ImportHandler
 }
 
 func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
@@ -69,6 +70,11 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.GET("/media/:id", h.Media.GetMedia)
 		admin.POST("/media/upload", h.Media.Upload)
 		admin.DELETE("/media/:id", h.Media.Delete)
+
+		// Import（批量匯入）
+		admin.POST("/import/categories", h.Import.ImportCategories)
+		admin.POST("/import/tags", h.Import.ImportTags)
+		admin.POST("/import/articles", h.Import.ImportArticles)
 	}
 
 	return r
