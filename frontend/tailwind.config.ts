@@ -6,6 +6,7 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -55,6 +56,7 @@ const config: Config = {
       fontFamily: {
         heading: ["Inter", "Noto Sans TC", "sans-serif"],
         body: ["Inter", "Noto Sans TC", "sans-serif"],
+        article: ["Noto Serif TC", "Georgia", "serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
@@ -69,6 +71,8 @@ const config: Config = {
         glow: "0 0 20px rgba(0, 212, 255, 0.3)",
         "glow-purple": "0 0 20px rgba(124, 58, 237, 0.3)",
         "glow-pink": "0 0 20px rgba(255, 0, 110, 0.3)",
+        "card-light": "0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)",
+        "card-light-hover": "0 4px 16px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -78,6 +82,7 @@ const config: Config = {
       animation: {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "gradient-shift": "gradient-shift 3s ease infinite",
+        "card-enter": "card-enter 0.4s ease-out forwards",
       },
       keyframes: {
         "pulse-glow": {
@@ -87,6 +92,10 @@ const config: Config = {
         "gradient-shift": {
           "0%, 100%": { backgroundPosition: "0% 50%" },
           "50%": { backgroundPosition: "100% 50%" },
+        },
+        "card-enter": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
     },

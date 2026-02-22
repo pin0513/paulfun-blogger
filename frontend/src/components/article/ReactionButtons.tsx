@@ -7,6 +7,7 @@ interface ReactionButtonsProps {
   articleId: number;
 }
 
-export function ReactionButtons({ articleId: _ }: ReactionButtonsProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ReactionButtons({ articleId }: ReactionButtonsProps) {
   return null;
 }

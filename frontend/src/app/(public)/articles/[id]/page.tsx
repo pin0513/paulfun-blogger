@@ -8,6 +8,8 @@ import { getCoverUrl } from "@/lib/api/media";
 import { TableOfContents } from "@/components/article/TableOfContents";
 import { ReactionButtons } from "@/components/article/ReactionButtons";
 import { CommentList } from "@/components/comment/CommentList";
+import { FontSizeControl } from "@/components/article/FontSizeControl";
+import { MobileToc } from "@/components/article/MobileToc";
 import type { Article } from "@/types";
 
 export default function ArticlePage() {
@@ -80,100 +82,111 @@ export default function ArticlePage() {
 
   return (
     <>
-      {/* Article Header */}
-      <header className="relative py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-cyber" />
-        <div className="absolute inset-0 opacity-10">
+      {/* Cover Image */}
+      <div className="relative bg-neutral-900 w-full overflow-hidden max-h-[240px] md:max-h-[480px]">
+        {article.coverImage && (
           <img
             src={getCoverUrl(article.coverImage)}
-            alt=""
+            alt={article.title}
             className="w-full h-full object-cover"
           />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background" />
+        )}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/30 to-transparent" />
+      </div>
 
-        <div className="container-narrow relative z-10">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-text-muted mb-6">
-            <Link href="/" className="hover:text-primary">
-              首頁
+      {/* Article Header */}
+      <div className="max-w-[680px] mx-auto px-4 lg:px-0 -mt-8 relative z-10">
+        {/* Category & Tags */}
+        <div className="flex items-center gap-3 mb-4">
+          {article.category && (
+            <Link
+              href={`/categories/${article.category.slug}`}
+              className="text-xs font-medium border px-2 py-0.5 rounded hover:opacity-80"
+              style={{
+                color: "var(--color-category)",
+                borderColor: "var(--color-category)",
+              }}
+            >
+              {article.category.name}
             </Link>
-            <span>/</span>
-            {article.category && (
-              <>
-                <Link
-                  href={`/categories/${article.category.slug}`}
-                  className="hover:text-secondary-300"
-                >
-                  {article.category.name}
-                </Link>
-                <span>/</span>
-              </>
-            )}
-            <span className="text-text truncate">{article.title}</span>
-          </div>
-
-          {/* Category & Tags */}
-          <div className="flex items-center gap-3 mb-4">
-            {article.category && (
-              <Link
-                href={`/categories/${article.category.slug}`}
-                className="text-xs font-medium text-secondary-300 border border-secondary/30 px-2 py-0.5 rounded hover:bg-secondary/10"
-              >
-                {article.category.name}
-              </Link>
-            )}
-            {article.tags.map((tag) => (
-              <Link
-                key={tag.id}
-                href={`/tags/${tag.slug}`}
-                className="text-xs text-text-muted border border-border px-2 py-0.5 rounded hover:border-primary hover:text-primary"
-              >
-                #{tag.name}
-              </Link>
-            ))}
-          </div>
-
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-heading font-bold text-text mb-6 leading-tight">
-            {article.title}
-          </h1>
-
-          {/* Meta */}
-          <div className="flex items-center gap-4 text-sm text-text-muted">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-xs text-primary font-mono">
-                {article.author.displayName?.charAt(0).toUpperCase()}
-              </div>
-              <span>{article.author.displayName}</span>
-            </div>
-            <span className="text-border">|</span>
-            <span className="font-mono text-xs">
-              {article.publishedAt
-                ? new Date(article.publishedAt).toLocaleDateString("zh-TW", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : ""}
-            </span>
-            <span className="text-border">|</span>
-            <span className="font-mono text-xs">
-              {article.viewCount} views
-            </span>
-          </div>
+          )}
+          {article.tags.map((tag) => (
+            <Link
+              key={tag.id}
+              href={`/tags/${tag.slug}`}
+              className="text-xs px-2 py-0.5 rounded transition-colors"
+              style={{
+                color: "var(--color-tag)",
+                borderWidth: "1px",
+                borderColor: "var(--color-tag)",
+                opacity: 0.8,
+              }}
+            >
+              #{tag.name}
+            </Link>
+          ))}
         </div>
-      </header>
 
-      {/* Article Content */}
-      <div className="container-wide py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-10 max-w-5xl mx-auto">
+        {/* Title */}
+        <h1
+          className="text-3xl md:text-4xl font-heading font-bold mb-6 leading-tight"
+          style={{ color: "var(--color-text)" }}
+        >
+          {article.title}
+        </h1>
+
+        {/* Meta */}
+        <div className="flex items-center gap-4 text-sm" style={{ color: "var(--color-text-muted)" }}>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono"
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-primary)",
+              }}
+            >
+              {article.author.displayName?.charAt(0).toUpperCase()}
+            </div>
+            <span>{article.author.displayName}</span>
+          </div>
+          <span style={{ color: "var(--color-border)" }}>|</span>
+          <span className="font-mono text-xs">
+            {article.publishedAt
+              ? new Date(article.publishedAt).toLocaleDateString("zh-TW", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : ""}
+          </span>
+          <span style={{ color: "var(--color-border)" }}>|</span>
+          <span className="font-mono text-xs">{article.viewCount} views</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-[900px] mx-auto px-4 lg:px-0 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-12">
           {/* Main Content */}
           <div>
             {/* Summary */}
             {article.summary && (
-              <div className="mb-8 p-4 border-l-2 border-primary/50 bg-surface/50 rounded-r-lg">
-                <p className="text-text-muted italic leading-relaxed">
+              <div
+                className="mb-8 p-4 rounded-r-lg"
+                style={{
+                  borderLeft: "2px solid var(--color-primary)",
+                  background: "var(--color-surface)",
+                  opacity: 0.9,
+                }}
+              >
+                <p
+                  className="italic leading-relaxed"
+                  style={{
+                    fontFamily: "'Noto Serif TC', Georgia, serif",
+                    color: "var(--color-text-muted)",
+                  }}
+                >
                   {article.summary}
                 </p>
               </div>
@@ -181,20 +194,33 @@ export default function ArticlePage() {
 
             {/* Article Body */}
             <article
-              className="prose-cyber"
+              className="prose-article"
               dangerouslySetInnerHTML={{ __html: processedContent }}
             />
 
             {/* Tags (bottom) */}
             {article.tags.length > 0 && (
-              <div className="mt-12 pt-6 border-t border-border">
+              <div
+                className="mt-12 pt-6"
+                style={{ borderTop: "1px solid var(--color-border)" }}
+              >
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-text-muted font-mono">tags:</span>
+                  <span
+                    className="text-sm font-mono"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    tags:
+                  </span>
                   {article.tags.map((tag) => (
                     <Link
                       key={tag.id}
                       href={`/tags/${tag.slug}`}
-                      className="text-sm text-primary border border-primary/30 px-3 py-1 rounded-full hover:bg-primary/10 transition-colors"
+                      className="text-sm px-3 py-1 rounded-full transition-colors"
+                      style={{
+                        color: "var(--color-tag)",
+                        border: "1px solid var(--color-tag)",
+                        opacity: 0.8,
+                      }}
                     >
                       #{tag.name}
                     </Link>
@@ -204,13 +230,24 @@ export default function ArticlePage() {
             )}
 
             {/* Reactions */}
-            <div className="mt-8 pt-6 border-t border-border">
-              <p className="text-sm text-text-muted mb-4">覺得這篇文章如何？</p>
+            <div
+              className="mt-8 pt-6"
+              style={{ borderTop: "1px solid var(--color-border)" }}
+            >
+              <p
+                className="text-sm mb-4"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                覺得這篇文章如何？
+              </p>
               <ReactionButtons articleId={article.id} />
             </div>
 
             {/* Comments */}
-            <div className="mt-12 pt-8 border-t border-border">
+            <div
+              className="mt-12 pt-8"
+              style={{ borderTop: "1px solid var(--color-border)" }}
+            >
               <CommentList articleId={article.id} />
             </div>
           </div>
@@ -221,6 +258,9 @@ export default function ArticlePage() {
           </aside>
         </div>
       </div>
+
+      <FontSizeControl />
+      <MobileToc content={article.content} />
     </>
   );
 }

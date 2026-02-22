@@ -36,9 +36,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
 
   useEffect(() => {
     // Observe which heading is in view
-    const headingElements = document.querySelectorAll(
-      "[data-toc-id]"
-    );
+    const headingElements = document.querySelectorAll("[data-toc-id]");
 
     if (headingElements.length === 0) return;
 
@@ -70,7 +68,10 @@ export function TableOfContents({ content }: TableOfContentsProps) {
 
   return (
     <nav className="card sticky top-24">
-      <h4 className="text-sm font-medium text-primary mb-4 font-mono tracking-wider uppercase">
+      <h4
+        className="text-sm font-medium mb-4 font-mono tracking-wider uppercase"
+        style={{ color: "var(--color-primary)" }}
+      >
         {"// 目錄"}
       </h4>
       <ul className="space-y-1">
@@ -81,11 +82,17 @@ export function TableOfContents({ content }: TableOfContentsProps) {
           >
             <button
               onClick={() => handleClick(item.id)}
-              className={`block w-full text-left text-sm py-1.5 transition-colors border-l-2 pl-3 ${
-                activeId === item.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-text-muted hover:text-text hover:border-border"
-              }`}
+              className="block w-full text-left text-sm py-1.5 transition-colors border-l-2 pl-3"
+              style={{
+                borderColor:
+                  activeId === item.id
+                    ? "var(--color-primary)"
+                    : "transparent",
+                color:
+                  activeId === item.id
+                    ? "var(--color-primary)"
+                    : "var(--color-text-muted)",
+              }}
             >
               {item.text}
             </button>

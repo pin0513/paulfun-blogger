@@ -48,7 +48,10 @@ func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublishe
 
 	if q.Search != "" {
 		like := "%" + strings.ToLower(q.Search) + "%"
-		query = query.Where("LOWER(title) LIKE ? OR LOWER(summary) LIKE ?", like, like)
+		query = query.Where(
+			"LOWER(title) LIKE ? OR LOWER(summary) LIKE ? OR LOWER(content) LIKE ?",
+			like, like, like,
+		)
 	}
 
 	var totalCount int64

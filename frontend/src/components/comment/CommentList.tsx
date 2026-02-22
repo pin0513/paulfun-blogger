@@ -7,6 +7,7 @@ interface CommentListProps {
   articleId: number;
 }
 
-export function CommentList({ articleId: _ }: CommentListProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function CommentList({ articleId }: CommentListProps) {
   return null;
 }
