@@ -38,8 +38,8 @@ export async function getArticles(
   );
 }
 
-export async function getArticleByID(
-  id: number
+export async function getArticleById(
+  id: number | string
 ): Promise<ApiResponse<Article>> {
   return apiClient.get<ApiResponse<Article>>(`/api/articles/${id}`);
 }
