@@ -70,6 +70,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section className="py-16" style={{ background: "var(--color-surface)" }}>
+        <div className="container-wide">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1">
+              <h2 className="text-2xl font-heading font-bold mb-4" style={{ color: "var(--color-primary)" }}>
+                關於 Paul
+              </h2>
+              <div className="space-y-4" style={{ color: "var(--color-text-secondary)" }}>
+                <p>
+                  嗨，我是保羅！一個熱愛技術的工程師，同時也是兩個孩子的爸。
+                </p>
+                <p>
+                  在這裡分享技術心得、開發筆記，以及生活的點點滴滴。從程式碼到育兒經，從羽球場到咖啡廳，記錄每一個值得回味的時刻。
+                </p>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <img
+                src={getMediaUrl("/uploads/hero/family-photo.jpg")}
+                alt="Paul 的家庭照片"
+                className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Articles Grid */}
       <section className="py-16">
         <div className="container-wide">
