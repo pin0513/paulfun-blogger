@@ -39,13 +39,20 @@ export default function HomePage() {
     <>
       {/* Hero Section */}
       <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-cyber" />
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0">
+          <img
+            src="/images/hero.png"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-background/60" />
         </div>
         <div className="container-narrow text-center relative z-10">
+          <img
+            src="/images/avatar.png"
+            alt="PaulFun"
+            className="w-20 h-20 rounded-full mx-auto mb-6 border-2 border-primary/50 shadow-glow"
+          />
           <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6">
             <span className="text-primary text-neon">Paul</span>
             <span className="text-text">Fun</span>

@@ -51,7 +51,7 @@ export function getMediaUrl(path: string): string {
 }
 
 // 取得文章封面 URL（無封面時使用預設圖片）
-const DEFAULT_COVER = "/uploads/covers/default.png";
+const DEFAULT_COVER = "/images/default-cover.png";
 
 export function getCoverUrl(coverImage?: string | null): string {
   return getMediaUrl(coverImage || DEFAULT_COVER);
