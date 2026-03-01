@@ -43,11 +43,11 @@ export async function deleteMedia(id: number): Promise<ApiResponse<boolean>> {
 // 取得媒體完整 URL 的輔助函數
 // 之後若切換到 Cloud Storage，只需修改此處
 export function getMediaUrl(path: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   if (path.startsWith("http")) {
     return path;
   }
-  return `${baseUrl}/${path.replace(/^\/+/, '')}`;
+  // 使用相對路徑，由 nginx 處理代理
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 // 取得文章封面 URL（無封面時使用預設圖片）

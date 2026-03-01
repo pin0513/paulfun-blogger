@@ -30,7 +30,7 @@
 | 前端 | Next.js 14 (App Router) + TailwindCSS + Jotai + Tiptap |
 | 後端 | Go 1.22 + Gin + GORM |
 | 資料庫 | PostgreSQL 16 Alpine |
-| 部署 | GCP Cloud Run + Cloud Storage |
+| 部署 | GCP Compute Engine (VM) + Docker Compose |
 
 ## 測試帳號（預設 Seed 資料）
 
@@ -162,3 +162,45 @@ docker exec -i paulfun-postgres-dev pg_restore \
 - 漸層邊框 (`border-gradient`)
 - 玻璃效果 (`glass`)
 - 動態漸層背景 (`bg-animated-gradient`)
+
+## GCP 部署環境
+
+### VM 資訊
+
+| 項目 | 值 |
+|------|-----|
+| 名稱 | `paul-ubuntu` |
+| 區域 | `asia-east1-a` |
+| 機型 | `g1-small` (1.7G RAM) |
+| External IP | `35.206.236.34` |
+| OS | Ubuntu 17.04 |
+| 磁碟 | 20G |
+
+### 部署架構
+
+```
+外部流量 → :8088 → paulfun-nginx (reverse proxy)
+                      ├── / → paulfun-frontend (:3000, Next.js SSR)
+                      └── /api → paulfun-go-server (:8080, Go API)
+                                    └── paulfun-postgres (:5432)
+```
+
+### 容器配置
+
+| 容器 | Image | Port | 用途 |
+|------|-------|------|------|
+| `paulfun-nginx` | nginx:1.25-alpine | `8088 → 80` | 反向代理 |
+| `paulfun-frontend` | paulfun-frontend:prod | `3000`（內部） | Next.js 前端 |
+| `paulfun-go-server` | paulfun-go-server:prod | `8080`（內部） | Go 後端 API |
+| `paulfun-postgres` | postgres:16-alpine | `5432`（內部） | 資料庫 |
+
+### 存取方式
+
+- Blog 網站: `http://35.206.236.34:8088`
+- SSH: `gcloud compute ssh paul-ubuntu --zone=asia-east1-a`
+
+### 注意事項
+
+- Port 80/443 被舊站 (nginx-php7 + mariadb) 佔用，Blog 暫用 8088
+- VM 無 Swap，記憶體偏緊，需注意 OOM 風險
+- OS 版本已停止支援 (Ubuntu 17.04)，未來考慮升級
