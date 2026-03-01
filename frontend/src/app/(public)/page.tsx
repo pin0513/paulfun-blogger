@@ -96,7 +96,7 @@ export default function HomePage() {
       </section>
 
       {/* About Section */}
-      <section className="py-16" style={{ background: "var(--color-surface)" }}>
+      <section id="about" className="py-16" style={{ background: "var(--color-surface)" }}>
         <div className="container-wide">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Text - on mobile comes second (order-2), on desktop first (md:order-1) */}

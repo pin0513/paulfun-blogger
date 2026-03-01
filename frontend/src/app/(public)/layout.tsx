@@ -15,6 +15,7 @@ interface Category {
 
 const navItems = [
   { href: "/", label: "首頁" },
+  { href: "/#about", label: "關於我" },
 ];
 
 export default function PublicLayout({
@@ -104,19 +105,24 @@ export default function PublicLayout({
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? "text-[var(--color-primary)]"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = item.href.startsWith("/#")
+                ? pathname === "/"
+                : pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-[var(--color-primary)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
 
             {/* Category Dropdown */}
             <div className="relative" ref={categoryDropdownRef}>
@@ -283,20 +289,25 @@ export default function PublicLayout({
                 </button>
               </form>
 
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`text-sm py-2 ${
-                    pathname === item.href
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-text-muted)]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const isActive = item.href.startsWith("/#")
+                  ? pathname === "/"
+                  : pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`text-sm py-2 ${
+                      isActive
+                        ? "text-[var(--color-primary)]"
+                        : "text-[var(--color-text-muted)]"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
 
               {/* Mobile Category Collapsible */}
               <div>
