@@ -16,6 +16,8 @@ interface Category {
 const navItems = [
   { href: "/", label: "首頁" },
   { href: "/#about", label: "關於我" },
+  { href: "https://learn.paulfun.net", label: "學習", external: true },
+  { href: "http://35.206.236.34:8089", label: "舊版 Blog", external: true },
 ];
 
 export default function PublicLayout({
@@ -106,10 +108,21 @@ export default function PublicLayout({
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => {
-              const isActive = item.href.startsWith("/#")
+              const isExternal = "external" in item && item.external;
+              const isActive = !isExternal && (item.href.startsWith("/#")
                 ? pathname === "/"
-                : pathname === item.href;
-              return (
+                : pathname === item.href);
+              return isExternal ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                >
+                  {item.label}
+                </a>
+              ) : (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -290,10 +303,22 @@ export default function PublicLayout({
               </form>
 
               {navItems.map((item) => {
-                const isActive = item.href.startsWith("/#")
+                const isExternal = "external" in item && item.external;
+                const isActive = !isExternal && (item.href.startsWith("/#")
                   ? pathname === "/"
-                  : pathname === item.href;
-                return (
+                  : pathname === item.href);
+                return isExternal ? (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm py-2 text-[var(--color-text-muted)]"
+                  >
+                    {item.label}
+                  </a>
+                ) : (
                   <Link
                     key={item.href}
                     href={item.href}

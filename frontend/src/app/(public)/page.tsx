@@ -61,7 +61,7 @@ export default function HomePage() {
       <section className="relative h-[300px] md:h-[400px] overflow-hidden">
         {/* Background image */}
         <img
-          src="/images/family-photo.jpg"
+          src="/images/blog-bg-image2026.jpg"
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -111,14 +111,28 @@ export default function HomePage() {
                 <p>
                   在這裡分享技術心得、開發筆記，以及生活的點點滴滴。從程式碼到育兒經，從羽球場到咖啡廳，記錄每一個值得回味的時刻。
                 </p>
+                <div className="flex items-center gap-4 pt-2">
+                  <a
+                    href="https://www.facebook.com/pin0513"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity"
+                    style={{ color: "var(--color-primary)" }}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                  </a>
+                </div>
               </div>
             </div>
 
             {/* Image - on mobile comes first (order-1), on desktop second (md:order-2) */}
             <div className="order-1 md:order-2">
               <img
-                src="/images/family-photo.jpg"
-                alt="Paul 的家庭照片"
+                src="/images/mido-baby-img.jpg"
+                alt="Paul 的小孩"
                 className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg"
               />
             </div>
