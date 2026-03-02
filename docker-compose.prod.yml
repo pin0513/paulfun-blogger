@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: paulfun-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paulfun_blogger
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  go-server:
+    image: paulfun-go-server:prod
+    container_name: paulfun-go-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: paulfun_blogger
+      JWT_SECRET: ${JWT_SECRET}
+      BASE_URL: ${BASE_URL:-http://paulfun.net}
+      GIN_MODE: release
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    image: paulfun-frontend:prod
+    container_name: paulfun-frontend
+    restart: unless-stopped
+    environment:
+      INTERNAL_API_URL: http://go-server:8080
+    depends_on:
+      - go-server
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: paulfun-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - go-server
+
+volumes:
+  postgres_data:
+  uploads_data:

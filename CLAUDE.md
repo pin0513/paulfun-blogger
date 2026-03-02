@@ -19,7 +19,8 @@
 │   └── e2e/               # Playwright E2E 測試
 ├── docker/                # Docker 相關設定
 ├── docker-compose.dev.yml # 本地開發環境（PostgreSQL）
-├── docker-compose.yml     # 完整環境
+├── docker-compose.prod.yml # GCP 生產環境
+├── docker-compose.yml     # 完整環境（舊 .NET 版，保留參考）
 └── README.md
 ```
 
@@ -179,28 +180,35 @@ docker exec -i paulfun-postgres-dev pg_restore \
 ### 部署架構
 
 ```
-外部流量 → :8088 → paulfun-nginx (reverse proxy)
-                      ├── / → paulfun-frontend (:3000, Next.js SSR)
-                      └── /api → paulfun-go-server (:8080, Go API)
-                                    └── paulfun-postgres (:5432)
+外部流量 → Cloudflare (HTTPS) → :80 → paulfun-nginx (reverse proxy)
+                                        ├── / → paulfun-frontend (:3000, Next.js SSR)
+                                        └── /api → paulfun-go-server (:8080, Go API)
+                                                      └── paulfun-postgres (:5432)
+
+舊 WordPress (備查) → :8089 → nginx-wp (skiychan/nginx-php7 + mariadb)
 ```
 
 ### 容器配置
 
 | 容器 | Image | Port | 用途 |
 |------|-------|------|------|
-| `paulfun-nginx` | nginx:1.25-alpine | `8088 → 80` | 反向代理 |
+| `paulfun-nginx` | nginx:1.25-alpine | `80 → 80` | 反向代理 |
 | `paulfun-frontend` | paulfun-frontend:prod | `3000`（內部） | Next.js 前端 |
 | `paulfun-go-server` | paulfun-go-server:prod | `8080`（內部） | Go 後端 API |
 | `paulfun-postgres` | postgres:16-alpine | `5432`（內部） | 資料庫 |
+| `nginx-wp` | skiychan/nginx-php7 | `8089 → 80` | 舊 WordPress（備查） |
+| `mariadb` | mariadb:10.2 | `3306`（內部） | WordPress DB |
 
 ### 存取方式
 
-- Blog 網站: `http://35.206.236.34:8088`
+- Blog 網站: `https://paulfun.net`（經 Cloudflare proxy）
+- Blog 直連: `http://35.206.236.34:80`（需帶 Host header）
+- 舊 WordPress: `http://35.206.236.34:8089`
 - SSH: `gcloud compute ssh paul-ubuntu --zone=asia-east1-a`
 
 ### 注意事項
 
-- Port 80/443 被舊站 (nginx-php7 + mariadb) 佔用，Blog 暫用 8088
+- Cloudflare SSL mode 設為 Flexible（Cloudflare HTTPS → GCP HTTP:80）
+- 舊 WordPress 保留在 port 8089 備查，容器名改為 `nginx-wp`
 - VM 無 Swap，記憶體偏緊，需注意 OOM 風險
 - OS 版本已停止支援 (Ubuntu 17.04)，未來考慮升級
