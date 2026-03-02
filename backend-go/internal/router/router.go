@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/paulhuang/paulfun-blogger/internal/config"
@@ -37,10 +38,10 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 	api := r.Group("/api")
 
 	// ── 認證（無需 token）────────────────────────────────────
+	loginLimiter := middleware.NewRateLimiter(200, 1*time.Minute)
 	auth := api.Group("/auth")
 	{
-		auth.POST("/login", h.Auth.Login)
-		auth.POST("/register", h.Auth.Register)
+		auth.POST("/login", loginLimiter.Limit(), h.Auth.Login)
 		auth.GET("/me", middleware.AuthRequired(cfg.JWTSecret), h.Auth.Me)
 	}
 
@@ -54,10 +55,13 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		articles.GET("/:id", h.Article.GetArticleByID)
 	}
 
-	// ── 後台 API（需要認證）──────────────────────────────────
+	// ── 後台 API（需要認證 + admin 權限）──────────────────────
 	admin := api.Group("/admin")
 	admin.Use(middleware.AuthRequired(cfg.JWTSecret))
+	admin.Use(middleware.AdminRequired())
 	{
+		// Auth（僅 admin 可註冊新帳號）
+		admin.POST("/auth/register", h.Auth.Register)
 		// Articles
 		admin.GET("/articles", h.Admin.ListArticles)
 		admin.GET("/articles/:id", h.Admin.GetArticle)
