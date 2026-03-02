@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getArticles } from "@/lib/api/articles";
-import { getCoverUrl, getMediaUrl } from "@/lib/api/media";
+import { getCoverUrl } from "@/lib/api/media";
 import type { ArticleListItem } from "@/types";
 
 export default function HomePage() {
@@ -61,7 +61,7 @@ export default function HomePage() {
       <section className="relative h-[300px] md:h-[400px] overflow-hidden">
         {/* Background image */}
         <img
-          src={getMediaUrl("/uploads/hero/family-photo.jpg")}
+          src="/images/family-photo.jpg"
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -77,7 +77,7 @@ export default function HomePage() {
           {/* Avatar */}
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-primary/60 shadow-lg mb-4">
             <img
-              src={getMediaUrl("/uploads/2023/06/cropped-resize_DSC05380-150x150.jpg")}
+              src="/images/avatar-paul.jpg"
               alt="Paul Huang"
               className="w-full h-full object-cover"
             />
@@ -117,7 +117,7 @@ export default function HomePage() {
             {/* Image - on mobile comes first (order-1), on desktop second (md:order-2) */}
             <div className="order-1 md:order-2">
               <img
-                src={getMediaUrl("/uploads/hero/family-photo.jpg")}
+                src="/images/family-photo.jpg"
                 alt="Paul 的家庭照片"
                 className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg"
               />
