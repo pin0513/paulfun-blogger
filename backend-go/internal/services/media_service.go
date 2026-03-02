@@ -1,19 +1,18 @@
 package services
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/paulhuang/paulfun-blogger/internal/apierror"
-	"github.com/paulhuang/paulfun-blogger/internal/config"
 	"github.com/paulhuang/paulfun-blogger/internal/dto"
 	"github.com/paulhuang/paulfun-blogger/internal/models"
+	"github.com/paulhuang/paulfun-blogger/internal/storage"
 	"gorm.io/gorm"
 )
 
@@ -29,12 +28,12 @@ const maxFileSize = 5 * 1024 * 1024 // 5MB
 
 // MediaService 處理媒體上傳、查詢、刪除業務邏輯。
 type MediaService struct {
-	db  *gorm.DB
-	cfg *config.Config
+	db      *gorm.DB
+	storage storage.Storage
 }
 
-func NewMediaService(db *gorm.DB, cfg *config.Config) *MediaService {
-	return &MediaService{db: db, cfg: cfg}
+func NewMediaService(db *gorm.DB, store storage.Storage) *MediaService {
+	return &MediaService{db: db, storage: store}
 }
 
 // GetMedia 查詢媒體列表（分頁 + 篩選）。
@@ -101,15 +100,8 @@ func (s *MediaService) Upload(fileHeader *multipart.FileHeader, userID uint) (*d
 	year := time.Now().UTC().Format("2006")
 	month := time.Now().UTC().Format("01")
 
-	relPath := filepath.Join("uploads", year, month)
-	absPath := filepath.Join(s.cfg.UploadDir, year, month)
-
-	if err := os.MkdirAll(absPath, 0755); err != nil {
-		return nil, fmt.Errorf("無法建立上傳目錄: %w", err)
-	}
-
-	filePath := filepath.Join(relPath, uniqueName)
-	fullPath := filepath.Join(s.cfg.UploadDir, year, month, uniqueName)
+	// storage key: "uploads/2026/03/uuid.jpg"
+	key := fmt.Sprintf("uploads/%s/%s/%s", year, month, uniqueName)
 
 	src, err := fileHeader.Open()
 	if err != nil {
@@ -117,22 +109,14 @@ func (s *MediaService) Upload(fileHeader *multipart.FileHeader, userID uint) (*d
 	}
 	defer src.Close()
 
-	dst, err := os.Create(fullPath)
+	url, err := s.storage.Upload(context.Background(), key, src, mimeType)
 	if err != nil {
-		return nil, fmt.Errorf("儲存檔案失敗: %w", err)
+		return nil, err
 	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, src); err != nil {
-		return nil, fmt.Errorf("寫入檔案失敗: %w", err)
-	}
-
-	// 統一使用斜線（跨平台相容）
-	storedPath := strings.ReplaceAll(filePath, "\\", "/")
 
 	media := models.Media{
 		FileName:   fileHeader.Filename,
-		FilePath:   storedPath,
+		FilePath:   key,
 		FileSize:   fileHeader.Size,
 		MimeType:   mimeType,
 		UploadedBy: userID,
@@ -142,7 +126,6 @@ func (s *MediaService) Upload(fileHeader *multipart.FileHeader, userID uint) (*d
 		return nil, fmt.Errorf("資料庫儲存失敗: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s", s.cfg.BaseURL, storedPath)
 	return &dto.UploadMediaResponse{
 		ID:       media.ID,
 		FileName: media.FileName,
@@ -163,11 +146,8 @@ func (s *MediaService) Delete(id uint, userID uint) error {
 		return err
 	}
 
-	// 刪除實體檔案（忽略不存在的情況）
-	fullPath := filepath.Join(s.cfg.UploadDir, strings.TrimPrefix(media.FilePath, "uploads/"))
-	if _, err := os.Stat(fullPath); err == nil {
-		os.Remove(fullPath)
-	}
+	// 刪除實體檔案
+	_ = s.storage.Delete(context.Background(), media.FilePath)
 
 	if err := s.db.Delete(&media).Error; err != nil {
 		return fmt.Errorf("刪除失敗: %w", err)
@@ -190,7 +170,7 @@ func (s *MediaService) checkOwnerOrAdmin(ownerID, requesterID uint) error {
 }
 
 func (s *MediaService) mapToDto(m models.Media) dto.MediaDto {
-	url := fmt.Sprintf("%s/%s", s.cfg.BaseURL, m.FilePath)
+	url := s.storage.URL(m.FilePath)
 
 	var uploader *dto.UserDto
 	if m.Uploader.ID != 0 {

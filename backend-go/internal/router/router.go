@@ -29,8 +29,10 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// 靜態檔案（上傳的媒體）
-	r.Static("/uploads", uploadDir)
+	// 靜態檔案（上傳的媒體）— 僅 local storage 模式需要
+	if cfg.StorageType != "r2" {
+		r.Static("/uploads", uploadDir)
+	}
 
 	api := r.Group("/api")
 

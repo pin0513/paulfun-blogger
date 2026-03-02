@@ -31,6 +31,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       BASE_URL: ${BASE_URL:-http://paulfun.net}
       GIN_MODE: release
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-paulfun-images}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
     volumes:
       - uploads_data:/app/uploads
 
@@ -40,6 +46,7 @@ services:
     restart: unless-stopped
     environment:
       INTERNAL_API_URL: http://go-server:8080
+      NEXT_PUBLIC_R2_URL: ${R2_PUBLIC_URL:-}
     depends_on:
       - go-server
 

@@ -8,6 +8,7 @@ import (
 	"github.com/paulhuang/paulfun-blogger/internal/handlers"
 	"github.com/paulhuang/paulfun-blogger/internal/router"
 	"github.com/paulhuang/paulfun-blogger/internal/services"
+	"github.com/paulhuang/paulfun-blogger/internal/storage"
 )
 
 func main() {
@@ -20,13 +21,30 @@ func main() {
 	// 3. Seed 初始資料（首次啟動）
 	db.Seed(database)
 
-	// 4. 初始化 Services
+	// 4. 初始化 Storage
+	var store storage.Storage
+	switch cfg.StorageType {
+	case "r2":
+		store = storage.NewR2Storage(
+			cfg.R2AccountID,
+			cfg.R2AccessKeyID,
+			cfg.R2SecretAccessKey,
+			cfg.R2Bucket,
+			cfg.R2PublicURL,
+		)
+		log.Printf("Storage: Cloudflare R2 (bucket=%s)", cfg.R2Bucket)
+	default:
+		store = storage.NewLocalStorage(cfg.UploadDir, cfg.BaseURL)
+		log.Printf("Storage: Local (dir=%s)", cfg.UploadDir)
+	}
+
+	// 5. 初始化 Services
 	authSvc := services.NewAuthService(database, cfg)
 	articleSvc := services.NewArticleService(database)
-	mediaSvc := services.NewMediaService(database, cfg)
+	mediaSvc := services.NewMediaService(database, store)
 	importSvc := services.NewImportService(database)
 
-	// 5. 初始化 Handlers
+	// 6. 初始化 Handlers
 	h := router.Handlers{
 		Auth:    handlers.NewAuthHandler(authSvc),
 		Article: handlers.NewArticleHandler(articleSvc),
@@ -35,7 +53,7 @@ func main() {
 		Import:  handlers.NewImportHandler(importSvc),
 	}
 
-	// 6. 設定路由
+	// 7. 設定路由
 	r := router.Setup(cfg, h, cfg.UploadDir)
 
 	addr := ":" + cfg.Port

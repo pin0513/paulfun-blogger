@@ -22,6 +22,14 @@ type Config struct {
 	Port      string
 	BaseURL   string
 	UploadDir string
+
+	// Storage 設定
+	StorageType      string // "local" | "r2"
+	R2AccountID      string
+	R2AccessKeyID    string
+	R2SecretAccessKey string
+	R2Bucket         string
+	R2PublicURL      string
 }
 
 func Load() *Config {
@@ -44,6 +52,13 @@ func Load() *Config {
 		Port:      getEnv("PORT", "8080"),
 		BaseURL:   getEnv("BASE_URL", "http://localhost:5266"),
 		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),
+
+		StorageType:      getEnv("STORAGE_TYPE", "local"),
+		R2AccountID:      getEnv("R2_ACCOUNT_ID", ""),
+		R2AccessKeyID:    getEnv("R2_ACCESS_KEY_ID", ""),
+		R2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
+		R2Bucket:         getEnv("R2_BUCKET", "paulfun-images"),
+		R2PublicURL:      getEnv("R2_PUBLIC_URL", ""),
 	}
 }
 
