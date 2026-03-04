@@ -3,10 +3,35 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PaulFun Blogger",
-  description: "個人部落格 - 科技神秘風格",
+  title: {
+    default: "PaulFun Blogger",
+    template: "%s",
+  },
+  description: "Paul 的個人部落格 — 技術筆記、生活隨筆、學習心得分享",
   icons: {
     icon: "/favicon.ico",
+  },
+  metadataBase: new URL("https://paulfun.net"),
+  openGraph: {
+    type: "website",
+    locale: "zh_TW",
+    siteName: "PaulFun Blogger",
+    title: "PaulFun Blogger",
+    description: "Paul 的個人部落格 — 技術筆記、生活隨筆、學習心得分享",
+    images: [
+      {
+        url: "https://img.paulfun.net/static/default-cover.png",
+        width: 1200,
+        height: 630,
+        alt: "PaulFun Blogger",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PaulFun Blogger",
+    description: "Paul 的個人部落格 — 技術筆記、生活隨筆、學習心得分享",
+    images: ["https://img.paulfun.net/static/default-cover.png"],
   },
 };
 
