@@ -185,7 +185,7 @@ export default function NewArticlePage() {
                 <img
                   src={coverImage}
                   alt="封面預覽"
-                  className="mt-3 rounded-md w-full h-32 object-cover"
+                  className="mt-3 rounded-md w-full aspect-video object-cover"
                 />
               )}
             </div>

@@ -83,12 +83,12 @@ export default function ArticleContent() {
   return (
     <>
       {/* Cover Image */}
-      <div className="relative bg-neutral-900 w-full overflow-hidden max-h-[240px] md:max-h-[480px]">
+      <div className="relative bg-neutral-900 w-full overflow-hidden aspect-[21/9]">
         {article.coverImage && (
           <img
             src={getCoverUrl(article.coverImage)}
             alt={article.title}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         )}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/30 to-transparent" />
