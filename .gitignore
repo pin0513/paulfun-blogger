@@ -53,6 +53,15 @@ TestResults/
 backend-go/uploads/
 backend-go/tmp/
 
+# Local image assets (uploaded to R2)
+covers/
+covers-test/
+images/
+
+# Claude Code / Cloudflare
+.claude/
+.wrangler/
+
 # Misc
 *.tmp
 *.temp
