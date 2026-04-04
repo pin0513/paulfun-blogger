@@ -10,9 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 科技神秘風配色
+        // Theme-aware colors via CSS variables
         primary: {
-          DEFAULT: "#00D4FF",
+          DEFAULT: "var(--color-primary)",
           50: "#E6FBFF",
           100: "#CCF7FF",
           200: "#99EFFF",
@@ -25,7 +25,7 @@ const config: Config = {
           900: "#002B33",
         },
         secondary: {
-          DEFAULT: "#7C3AED",
+          DEFAULT: "var(--color-secondary)",
           50: "#F3EEFF",
           100: "#E7DDFF",
           200: "#CFBBFF",
@@ -37,15 +37,17 @@ const config: Config = {
           800: "#301262",
           900: "#180931",
         },
-        background: "#0A0A0F",
-        surface: "#1A1A2E",
+        background: "var(--color-bg)",
+        surface: "var(--color-surface)",
+        "surface-elevated": "var(--color-surface-elevated)",
         text: {
-          DEFAULT: "#E4E4E7",
-          muted: "#71717A",
+          DEFAULT: "var(--color-text)",
+          secondary: "var(--color-text-secondary)",
+          muted: "var(--color-text-muted)",
         },
-        accent: "#FF006E",
-        border: "#27273A",
-        // 額外霓虹色
+        accent: "var(--color-accent)",
+        border: "var(--color-border)",
+        // 額外霓虹色（靜態值，不隨主題切換）
         neon: {
           cyan: "#00D4FF",
           purple: "#7C3AED",
