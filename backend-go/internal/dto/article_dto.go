@@ -75,6 +75,54 @@ type UpdateArticleRequest struct {
 	TagIDs     []uint  `json:"tagIds"`
 }
 
+// PatchArticleRequest 支援單一欄位更新。
+// 搭配 PatchArticleFields 使用，透過 json.RawMessage 判斷哪些欄位有傳送。
+type PatchArticleRequest struct {
+	Title      *string `json:"title"`
+	Summary    *string `json:"summary"`
+	Content    *string `json:"content"`
+	CoverImage *string `json:"coverImage"`
+	CategoryID *uint   `json:"categoryId"`
+	TagIDs     []uint  `json:"tagIds"`
+}
+
+// PatchArticleFields 記錄哪些欄位在 JSON 中有明確傳送（包含 null）。
+type PatchArticleFields struct {
+	HasTitle      bool
+	HasSummary    bool
+	HasContent    bool
+	HasCoverImage bool
+	HasCategoryID bool
+	HasTagIDs     bool
+}
+
+// ArticleArchiveDto 文章歷史版本摘要。
+type ArticleArchiveDto struct {
+	ID         uint      `json:"id"`
+	ArticleID  uint      `json:"articleId"`
+	Title      string    `json:"title"`
+	Version    int       `json:"version"`
+	ArchivedAt time.Time `json:"archivedAt"`
+	ArchivedBy uint      `json:"archivedBy"`
+}
+
+// ArticleArchiveDetailDto 文章歷史版本完整內容。
+type ArticleArchiveDetailDto struct {
+	ID         uint      `json:"id"`
+	ArticleID  uint      `json:"articleId"`
+	Title      string    `json:"title"`
+	Slug       string    `json:"slug"`
+	Summary    *string   `json:"summary"`
+	Content    *string   `json:"content"`
+	CoverImage *string   `json:"coverImage"`
+	CategoryID *uint     `json:"categoryId"`
+	Status     string    `json:"status"`
+	Version    int       `json:"version"`
+	TagIDs     string    `json:"tagIds"`
+	ArchivedAt time.Time `json:"archivedAt"`
+	ArchivedBy uint      `json:"archivedBy"`
+}
+
 type PublishArticleRequest struct {
 	ScheduledAt *time.Time `json:"scheduledAt"`
 }

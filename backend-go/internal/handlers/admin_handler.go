@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -101,6 +103,128 @@ func (h *AdminHandler) UpdateArticle(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.Ok(article, "文章更新成功"))
+}
+
+// PATCH /api/admin/articles/:id — 局部更新（只更新有傳送的欄位）
+func (h *AdminHandler) PatchArticle(c *gin.Context) {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, dto.Fail[any]("未登入"))
+		return
+	}
+
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
+		return
+	}
+
+	// 讀取 raw body，用 map 判斷哪些欄位有傳送
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("讀取請求失敗"))
+		return
+	}
+
+	var rawFields map[string]json.RawMessage
+	if err := json.Unmarshal(body, &rawFields); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("JSON 格式錯誤"))
+		return
+	}
+
+	var req dto.PatchArticleRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("請求格式錯誤: "+err.Error()))
+		return
+	}
+
+	// 建立 fields mask：只有 JSON 中有出現的 key 才算「有傳送」
+	_, hasTitle := rawFields["title"]
+	_, hasSummary := rawFields["summary"]
+	_, hasContent := rawFields["content"]
+	_, hasCoverImage := rawFields["coverImage"]
+	_, hasCategoryID := rawFields["categoryId"]
+	_, hasTagIDs := rawFields["tagIds"]
+
+	fields := dto.PatchArticleFields{
+		HasTitle:      hasTitle,
+		HasSummary:    hasSummary,
+		HasContent:    hasContent,
+		HasCoverImage: hasCoverImage,
+		HasCategoryID: hasCategoryID,
+		HasTagIDs:     hasTagIDs,
+	}
+
+	article, err := h.articleSvc.PatchArticle(id, req, fields, userID)
+	if err != nil {
+		handleErr(c, err, "更新失敗")
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Ok(article, "文章更新成功"))
+}
+
+// GET /api/admin/articles/:id/archives — 取得文章歷史版本列表
+func (h *AdminHandler) GetArticleArchives(c *gin.Context) {
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
+		return
+	}
+
+	archives, err := h.articleSvc.GetArticleArchives(id)
+	if err != nil {
+		handleErr(c, err, "查詢失敗")
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Ok(archives, ""))
+}
+
+// GET /api/admin/articles/:id/archives/:archiveId — 取得歷史版本完整內容
+func (h *AdminHandler) GetArticleArchiveDetail(c *gin.Context) {
+	archiveID, err := parseUintParam(c, "archiveId")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("archiveId 格式錯誤"))
+		return
+	}
+
+	detail, err := h.articleSvc.GetArticleArchiveDetail(archiveID)
+	if err != nil {
+		handleErr(c, err, "查詢失敗")
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Ok(detail, ""))
+}
+
+// POST /api/admin/articles/:id/restore/:archiveId — 從歷史版本還原
+func (h *AdminHandler) RestoreArticle(c *gin.Context) {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, dto.Fail[any]("未登入"))
+		return
+	}
+
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
+		return
+	}
+
+	archiveID, err := parseUintParam(c, "archiveId")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("archiveId 格式錯誤"))
+		return
+	}
+
+	article, err := h.articleSvc.RestoreArticle(id, archiveID, userID)
+	if err != nil {
+		handleErr(c, err, "還原失敗")
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Ok(article, "文章已還原"))
 }
 
 // DELETE /api/admin/articles/:id

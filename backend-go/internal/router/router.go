@@ -67,9 +67,13 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.GET("/articles/:id", h.Admin.GetArticle)
 		admin.POST("/articles", h.Admin.CreateArticle)
 		admin.PUT("/articles/:id", h.Admin.UpdateArticle)
+		admin.PATCH("/articles/:id", h.Admin.PatchArticle)
 		admin.DELETE("/articles/:id", h.Admin.DeleteArticle)
 		admin.POST("/articles/:id/publish", h.Admin.PublishArticle)
 		admin.POST("/articles/:id/unpublish", h.Admin.UnpublishArticle)
+		admin.GET("/articles/:id/archives", h.Admin.GetArticleArchives)
+		admin.GET("/articles/:id/archives/:archiveId", h.Admin.GetArticleArchiveDetail)
+		admin.POST("/articles/:id/restore/:archiveId", h.Admin.RestoreArticle)
 
 		// Media
 		admin.GET("/media", h.Media.ListMedia)

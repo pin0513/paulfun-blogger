@@ -28,6 +28,34 @@ export interface CreateArticleRequest {
 
 export type UpdateArticleRequest = CreateArticleRequest;
 
+export interface PatchArticleRequest {
+  title?: string;
+  summary?: string | null;
+  content?: string | null;
+  coverImage?: string | null;
+  categoryId?: number | null;
+  tagIds?: number[];
+}
+
+export interface ArticleArchive {
+  id: number;
+  articleId: number;
+  title: string;
+  version: number;
+  archivedAt: string;
+  archivedBy: number;
+}
+
+export interface ArticleArchiveDetail extends ArticleArchive {
+  slug: string;
+  summary?: string;
+  content?: string;
+  coverImage?: string;
+  categoryId?: number;
+  status: string;
+  tagIds: string;
+}
+
 // Public APIs
 export async function getArticles(
   params?: ArticleQueryParams
@@ -71,6 +99,39 @@ export async function updateArticle(
   data: UpdateArticleRequest
 ): Promise<ApiResponse<Article>> {
   return apiClient.put<ApiResponse<Article>>(`/api/admin/articles/${id}`, data);
+}
+
+export async function patchArticle(
+  id: number,
+  data: PatchArticleRequest
+): Promise<ApiResponse<Article>> {
+  return apiClient.patch<ApiResponse<Article>>(`/api/admin/articles/${id}`, data);
+}
+
+export async function getArticleArchives(
+  id: number
+): Promise<ApiResponse<ArticleArchive[]>> {
+  return apiClient.get<ApiResponse<ArticleArchive[]>>(
+    `/api/admin/articles/${id}/archives`
+  );
+}
+
+export async function getArticleArchiveDetail(
+  articleId: number,
+  archiveId: number
+): Promise<ApiResponse<ArticleArchiveDetail>> {
+  return apiClient.get<ApiResponse<ArticleArchiveDetail>>(
+    `/api/admin/articles/${articleId}/archives/${archiveId}`
+  );
+}
+
+export async function restoreArticle(
+  articleId: number,
+  archiveId: number
+): Promise<ApiResponse<Article>> {
+  return apiClient.post<ApiResponse<Article>>(
+    `/api/admin/articles/${articleId}/restore/${archiveId}`
+  );
 }
 
 export async function deleteArticle(id: number): Promise<ApiResponse<boolean>> {

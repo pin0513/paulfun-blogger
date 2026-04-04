@@ -6,14 +6,17 @@ import Link from "next/link";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import {
   getAdminArticle,
-  updateArticle,
+  patchArticle,
   deleteArticle,
   getCategories,
   getTags,
   publishArticle,
   unpublishArticle,
+  getArticleArchives,
+  restoreArticle,
 } from "@/lib/api/articles";
 import type { Article } from "@/types";
+import type { ArticleArchive } from "@/lib/api/articles";
 
 interface Category {
   id: number;
@@ -46,6 +49,8 @@ export default function EditArticlePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [archives, setArchives] = useState<ArticleArchive[]>([]);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -75,6 +80,13 @@ export default function EditArticlePage() {
         if (tagsRes.success && tagsRes.data) {
           setTags(tagsRes.data);
         }
+
+        // 載入歷史版本
+        if (articleRes.success && articleRes.data) {
+          getArticleArchives(articleId).then((res) => {
+            if (res.success && res.data) setArchives(res.data);
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setError("載入資料失敗");
@@ -103,12 +115,12 @@ export default function EditArticlePage() {
     setIsSaving(true);
 
     try {
-      const response = await updateArticle(articleId, {
+      const response = await patchArticle(articleId, {
         title,
-        summary: summary || undefined,
+        summary: summary || null,
         content,
-        coverImage: coverImage || undefined,
-        categoryId,
+        coverImage: coverImage || null,
+        categoryId: categoryId ?? null,
         tagIds: selectedTags,
       });
 
@@ -116,6 +128,10 @@ export default function EditArticlePage() {
         setArticle(response.data);
         setSuccessMessage("儲存成功");
         setTimeout(() => setSuccessMessage(""), 3000);
+        // 重新載入歷史版本
+        getArticleArchives(articleId).then((res) => {
+          if (res.success && res.data) setArchives(res.data);
+        });
       } else {
         setError(response.message || "更新文章失敗");
       }
@@ -180,6 +196,36 @@ export default function EditArticlePage() {
 
   const handleCancel = () => {
     router.push("/admin/articles");
+  };
+
+  const handleRestore = async (archiveId: number) => {
+    if (!window.confirm("確定要還原到此版本？當前內容會被存入歷史紀錄。")) return;
+    setIsRestoring(true);
+    try {
+      const response = await restoreArticle(articleId, archiveId);
+      if (response.success && response.data) {
+        const art = response.data;
+        setArticle(art);
+        setTitle(art.title);
+        setSummary(art.summary || "");
+        setContent(art.content);
+        setCoverImage(art.coverImage || "");
+        setCategoryId(art.category?.id);
+        setSelectedTags(art.tags?.map((t) => t.id) || []);
+        setSuccessMessage("已還原至歷史版本");
+        setTimeout(() => setSuccessMessage(""), 3000);
+        // 重新載入歷史版本
+        getArticleArchives(articleId).then((res) => {
+          if (res.success && res.data) setArchives(res.data);
+        });
+      } else {
+        setError("還原失敗");
+      }
+    } catch {
+      setError("還原時發生錯誤");
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   const handlePreview = () => {
@@ -400,7 +446,7 @@ export default function EditArticlePage() {
                 <img
                   src={coverImage}
                   alt="封面預覽"
-                  className="mt-3 rounded-md w-full h-32 object-cover"
+                  className="mt-3 rounded-md w-full aspect-video object-cover"
                 />
               )}
             </div>
@@ -476,6 +522,40 @@ export default function EditArticlePage() {
                 </div>
               </dl>
             </div>
+
+            {/* Version History */}
+            {archives.length > 0 && (
+              <div className="card">
+                <h3 className="font-medium text-text mb-4">
+                  歷史版本 ({archives.length})
+                </h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {archives.map((archive) => (
+                    <div
+                      key={archive.id}
+                      className="flex items-center justify-between text-sm p-2 rounded bg-surface hover:bg-secondary/30 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-text truncate text-xs">
+                          v{archive.version} - {archive.title}
+                        </p>
+                        <p className="text-text-muted text-xs">
+                          {new Date(archive.archivedAt).toLocaleString("zh-TW")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRestore(archive.id)}
+                        className="ml-2 text-xs text-primary hover:underline shrink-0"
+                        disabled={isSaving || isRestoring}
+                      >
+                        還原
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </form>
