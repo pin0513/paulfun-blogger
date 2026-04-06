@@ -524,7 +524,40 @@ docker exec -i paulfun-postgres-dev pg_restore \
 - Blog 網站: `https://paulfun.net`（經 Cloudflare proxy）
 - Blog 直連: `http://35.206.236.34:80`（需帶 Host header）
 - 舊 WordPress: `http://35.206.236.34:8089`
-- SSH: `gcloud compute ssh paul-ubuntu --zone=asia-east1-a`
+- SSH: `gcloud compute ssh paul-ubuntu --zone=asia-east1-a --project=paul-test-174403`
+  - GCP 帳號: `pin0513@gmail.com`（需先 `gcloud config set account pin0513@gmail.com`）
+  - GCP 專案: `paul-test-174403`
+
+### 部署方式（手動）
+
+VM 上沒有 git repo，使用本機 build image → scp → load 方式部署：
+
+```bash
+# 0. 確保使用正確的 GCP 帳號
+gcloud config set account pin0513@gmail.com
+
+# 1. 本機 build Docker image
+cd frontend
+docker build --build-arg NEXT_PUBLIC_R2_URL=https://img.paulfun.net -t paulfun-frontend:prod .
+
+cd ../backend-go
+docker build -t paulfun-go-server:prod .
+
+# 2. 匯出 image
+docker save paulfun-frontend:prod | gzip > /tmp/frontend.tar.gz
+docker save paulfun-go-server:prod | gzip > /tmp/go-server.tar.gz
+
+# 3. scp 到 VM
+gcloud compute scp /tmp/frontend.tar.gz paul-ubuntu:~/paulfun-blogger/ --zone=asia-east1-a --project=paul-test-174403
+gcloud compute scp /tmp/go-server.tar.gz paul-ubuntu:~/paulfun-blogger/ --zone=asia-east1-a --project=paul-test-174403
+
+# 4. SSH 進 VM load image 並重啟
+gcloud compute ssh paul-ubuntu --zone=asia-east1-a --project=paul-test-174403 --command="\
+  cd ~/paulfun-blogger && \
+  docker load < frontend.tar.gz && \
+  docker load < go-server.tar.gz && \
+  docker compose -f docker-compose.prod.yml up -d"
+```
 
 ### 注意事項
 

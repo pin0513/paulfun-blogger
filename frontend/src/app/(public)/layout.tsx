@@ -15,7 +15,7 @@ interface Category {
 
 const navItems = [
   { href: "/", label: "首頁" },
-  { href: "/#about", label: "關於我" },
+  { href: "https://bio.paulfun.net", label: "關於我", external: true },
   { href: "https://learn.paulfun.net", label: "學習", external: true },
   { href: "http://35.206.236.34:8089", label: "舊版 Blog", external: true },
 ];
