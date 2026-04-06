@@ -109,74 +109,9 @@ export default function HomePage() {
                   嗨，我是保羅！一個熱愛技術的工程師，同時也是兩個孩子的爸。
                 </p>
                 <p>
-                  在這裡分享技術心得、開發筆記，以及生活的點點滴滴。從程式碼到育兒經，從羽球場到露營地，記錄每一個值得回味的時刻。
+                  在這裡分享技術心得、開發筆記，以及生活的點點滴滴。從程式碼到育兒經，從羽球場到咖啡廳，記錄每一個值得回味的時刻。
                 </p>
-
-                {/* Hobbies */}
-                <div className="pt-2 space-y-3">
-                  <h3 className="text-sm font-heading font-semibold tracking-wide uppercase" style={{ color: "var(--color-text-muted)" }}>
-                    興趣愛好
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {["Badminton", "Camping", "Coffee", "Coding"].map((hobby) => (
-                      <span
-                        key={hobby}
-                        className="text-xs font-medium px-3 py-1 rounded-full"
-                        style={{
-                          color: "var(--color-primary)",
-                          border: "1px solid var(--color-primary)",
-                          background: "var(--color-bg)",
-                        }}
-                      >
-                        {hobby}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Camping Gear */}
-                <div className="pt-1">
-                  <div className="rounded-lg p-4" style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)" }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg">&#9978;</span>
-                      <h4 className="text-sm font-heading font-semibold" style={{ color: "var(--color-text)" }}>
-                        Camping Gear
-                      </h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-                      <div className="flex items-start gap-1.5">
-                        <span style={{ color: "var(--color-primary)" }}>&#9650;</span>
-                        <span>Snow Peak 鎖地獸 TP-671</span>
-                      </div>
-                      <div className="flex items-start gap-1.5">
-                        <span style={{ color: "var(--color-primary)" }}>&#9650;</span>
-                        <span>Snow Peak 雨棚帳 260</span>
-                      </div>
-                      <div className="flex items-start gap-1.5">
-                        <span style={{ color: "var(--color-primary)" }}>&#9650;</span>
-                        <span>Snow Peak 天幕 HD-250</span>
-                      </div>
-                      <div className="flex items-start gap-1.5">
-                        <span style={{ color: "var(--color-primary)" }}>&#9650;</span>
-                        <span>Snow Peak IGT</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex items-center gap-4 pt-2">
-                  <a
-                    href="https://bio.paulfun.net"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity"
-                    style={{ color: "var(--color-primary)" }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    More about me
-                  </a>
                   <a
                     href="https://www.facebook.com/pin0513"
                     target="_blank"
