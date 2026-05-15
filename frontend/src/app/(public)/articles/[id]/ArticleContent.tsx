@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getArticleById } from "@/lib/api/articles";
-import { getCoverUrl } from "@/lib/api/media";
 import { TableOfContents } from "@/components/article/TableOfContents";
 import { ReactionButtons } from "@/components/article/ReactionButtons";
 import { CommentList } from "@/components/comment/CommentList";
@@ -82,22 +81,18 @@ export default function ArticleContent() {
 
   return (
     <>
-      {/* Cover Image */}
-      <div className="relative bg-neutral-900 w-full overflow-hidden aspect-[21/9]">
-        {article.coverImage && (
-          <img
-            src={getCoverUrl(article.coverImage)}
-            alt={article.title}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/30 to-transparent" />
-      </div>
-
       {/* Article Header */}
-      <div className="max-w-[680px] mx-auto px-4 lg:px-0 -mt-8 relative z-10">
+      <div className="max-w-[680px] mx-auto px-4 lg:px-0 pt-10 lg:pt-14">
+        {/* Title — light: medium 質感 / dark: cyber heading */}
+        <h1
+          className="text-3xl md:text-4xl font-medium mb-4 leading-tight dark:font-heading dark:font-bold"
+          style={{ color: "var(--color-text)" }}
+        >
+          {article.title}
+        </h1>
+
         {/* Category & Tags */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
           {article.category && (
             <Link
               href={`/categories/${article.category.slug}`}
@@ -126,14 +121,6 @@ export default function ArticleContent() {
             </Link>
           ))}
         </div>
-
-        {/* Title */}
-        <h1
-          className="text-3xl md:text-4xl font-heading font-bold mb-6 leading-tight"
-          style={{ color: "var(--color-text)" }}
-        >
-          {article.title}
-        </h1>
 
         {/* Meta */}
         <div className="flex items-center gap-4 text-sm" style={{ color: "var(--color-text-muted)" }}>
