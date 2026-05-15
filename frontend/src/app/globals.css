@@ -343,7 +343,8 @@
     max-width: 720px;
   }
   .dark .prose-article {
-    font-family: 'Noto Serif TC', Georgia, serif;
+    /* 與 light mode 一致用 Huninn 圓體，保留品牌字體個性 */
+    font-family: 'Huninn', 'Noto Serif TC', Georgia, serif;
     line-height: 1.72;
   }
 
@@ -357,7 +358,7 @@
   .dark .prose-article h1,
   .dark .prose-article h2,
   .dark .prose-article h3 {
-    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    font-family: 'Huninn', 'Noto Sans TC', sans-serif;
     font-weight: 700;
   }
 
