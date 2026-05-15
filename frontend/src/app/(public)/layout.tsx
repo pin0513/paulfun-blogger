@@ -15,6 +15,8 @@ interface Category {
 
 const navItems = [
   { href: "/", label: "首頁" },
+  { href: "https://world-news.paulfun.net", label: "全球戰情室 (beta)", external: true },
+  { href: "https://zhoushen.paulfun.net", label: "周深 Moment", external: true },
   { href: "https://bio.paulfun.net", label: "關於我", external: true },
   { href: "https://learn.paulfun.net", label: "學習", external: true },
   { href: "http://35.206.236.34:8089", label: "舊版 Blog", external: true },
@@ -94,19 +96,20 @@ export default function PublicLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-[var(--color-border)] sticky top-0 z-50 glass">
-        <div className="container-wide py-4 flex items-center justify-between">
+      {/* Header — light: editorial 簡約；dark: cyber glass */}
+      <header className="border-b sticky top-0 z-50 dark:glass dark:border-[var(--color-border)] border-[var(--color-border)] bg-[var(--color-bg)]/95 backdrop-blur-sm">
+        <div className="container-wide py-2.5 lg:py-4 flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="text-2xl font-heading font-bold text-neon tracking-wider"
+            className="text-xl lg:text-2xl font-bold tracking-wider whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded shrink-0
+                       dark:font-heading dark:text-neon"
             style={{ color: "var(--color-primary)" }}
           >
             PaulFun
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-5 min-w-0">
             {navItems.map((item) => {
               const isExternal = "external" in item && item.external;
               const isActive = !isExternal && (item.href.startsWith("/#")
@@ -118,7 +121,7 @@ export default function PublicLayout({
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                  className="text-sm font-medium whitespace-nowrap transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                 >
                   {item.label}
                 </a>
@@ -126,7 +129,7 @@ export default function PublicLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium whitespace-nowrap transition-colors ${
                     isActive
                       ? "text-[var(--color-primary)]"
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
@@ -138,11 +141,11 @@ export default function PublicLayout({
             })}
 
             {/* Category Dropdown */}
-            <div className="relative" ref={categoryDropdownRef}>
+            <div className="relative shrink-0" ref={categoryDropdownRef}>
               <button
                 onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
                 onMouseEnter={() => setCategoryDropdownOpen(true)}
-                className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                className={`text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
                   pathname.startsWith("/categories")
                     ? "text-[var(--color-primary)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
@@ -194,7 +197,7 @@ export default function PublicLayout({
           </nav>
 
           {/* Desktop Right: Search + Theme + Auth */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearchSubmit} className="flex items-center">
@@ -255,7 +258,9 @@ export default function PublicLayout({
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden p-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40"
+            aria-label={mobileMenuOpen ? "關閉選單" : "開啟選單"}
+            aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -272,121 +277,128 @@ export default function PublicLayout({
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[var(--color-border)] glass">
-            <nav className="container-wide py-4 flex flex-col gap-3">
+          <div className="lg:hidden border-t border-[var(--color-border)] glass animate-slide-down max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <nav className="container-wide py-3 flex flex-col">
               {/* Mobile Search */}
-              <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜尋文章..."
-                  className="flex-1 px-3 py-2 text-sm rounded-lg focus:outline-none"
-                  style={{
-                    background: "var(--color-bg)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 text-sm rounded-lg transition-colors"
-                  style={{
-                    color: "var(--color-primary)",
-                    border: "1px solid var(--color-primary)",
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
-              </form>
-
-              {navItems.map((item) => {
-                const isExternal = "external" in item && item.external;
-                const isActive = !isExternal && (item.href.startsWith("/#")
-                  ? pathname === "/"
-                  : pathname === item.href);
-                return isExternal ? (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm py-2 text-[var(--color-text-muted)]"
-                  >
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`text-sm py-2 ${
-                      isActive
-                        ? "text-[var(--color-primary)]"
-                        : "text-[var(--color-text-muted)]"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-
-              {/* Mobile Category Collapsible */}
-              <div>
-                <button
-                  onClick={() => setMobileCategoryOpen(!mobileCategoryOpen)}
-                  className={`text-sm py-2 w-full text-left flex items-center justify-between ${
-                    pathname.startsWith("/categories")
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-text-muted)]"
-                  }`}
-                >
-                  分類
+              <form onSubmit={handleSearchSubmit} className="flex gap-2 mb-2">
+                <div className="relative flex-1">
                   <svg
-                    className={`w-4 h-4 transition-transform ${mobileCategoryOpen ? "rotate-180" : ""}`}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                </button>
-                {mobileCategoryOpen && (
-                  <div className="pl-4 flex flex-col gap-1 mt-1">
-                    <Link
-                      href="/categories"
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="搜尋文章..."
+                    className="w-full pl-10 pr-3 h-11 text-base rounded-lg focus:outline-none focus:ring-1"
+                    style={{
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text)",
+                    }}
+                  />
+                </div>
+              </form>
+
+              {/* Nav items */}
+              <div className="flex flex-col py-1">
+                {navItems.map((item) => {
+                  const isExternal = "external" in item && item.external;
+                  const isActive = !isExternal && (item.href.startsWith("/#")
+                    ? pathname === "/"
+                    : pathname === item.href);
+                  const baseCls = "flex items-center justify-between min-h-[44px] px-3 rounded-lg transition-colors text-base";
+                  return isExternal ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-sm py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                      className={`${baseCls} text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)]`}
                     >
-                      全部分類
+                      <span>{item.label}</span>
+                      <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`${baseCls} ${
+                        isActive
+                          ? "text-[var(--color-primary)] bg-[var(--color-surface)]"
+                          : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
+                      }`}
+                    >
+                      {item.label}
                     </Link>
-                    {categories.map((cat) => (
+                  );
+                })}
+
+                {/* Mobile Category Collapsible */}
+                <div>
+                  <button
+                    onClick={() => setMobileCategoryOpen(!mobileCategoryOpen)}
+                    className={`flex items-center justify-between min-h-[44px] px-3 rounded-lg w-full text-base transition-colors ${
+                      pathname.startsWith("/categories")
+                        ? "text-[var(--color-primary)] bg-[var(--color-surface)]"
+                        : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
+                    }`}
+                    aria-expanded={mobileCategoryOpen}
+                  >
+                    <span>分類</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${mobileCategoryOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {mobileCategoryOpen && (
+                    <div className="ml-3 pl-3 flex flex-col" style={{ borderLeft: "1px solid var(--color-border)" }}>
                       <Link
-                        key={cat.slug}
-                        href={`/categories/${cat.slug}`}
+                        href="/categories"
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`text-sm py-1.5 ${
-                          pathname === `/categories/${cat.slug}`
-                            ? "text-secondary-300"
-                            : "text-[var(--color-text-muted)] hover:text-secondary-300"
-                        }`}
+                        className="flex items-center min-h-[40px] px-3 rounded-lg text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
                       >
-                        {cat.name}
+                        全部分類
                       </Link>
-                    ))}
-                  </div>
-                )}
+                      {categories.map((cat) => (
+                        <Link
+                          key={cat.slug}
+                          href={`/categories/${cat.slug}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`flex items-center min-h-[40px] px-3 rounded-lg text-sm transition-colors ${
+                            pathname === `/categories/${cat.slug}`
+                              ? "text-secondary-300 bg-[var(--color-surface)]"
+                              : "text-[var(--color-text-muted)] hover:text-secondary-300 hover:bg-[var(--color-surface)]"
+                          }`}
+                        >
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="pt-3 mt-2 flex items-center justify-between" style={{ borderTop: "1px solid var(--color-border)" }}>
+              {/* Footer row: auth + theme */}
+              <div className="mt-2 pt-3 flex items-center justify-between gap-2" style={{ borderTop: "1px solid var(--color-border)" }}>
                 {isAuthenticated ? (
                   <Link
                     href="/admin"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm text-[var(--color-text-muted)]"
+                    className="btn btn-outline text-sm px-4 h-10 flex items-center"
                   >
                     後台管理
                   </Link>
@@ -394,7 +406,7 @@ export default function PublicLayout({
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm text-[var(--color-primary)]"
+                    className="btn btn-outline text-sm px-4 h-10 flex items-center"
                   >
                     登入
                   </Link>
@@ -409,13 +421,13 @@ export default function PublicLayout({
       {/* Main Content */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--color-border)]" style={{ backgroundColor: "var(--color-surface)" }}>
+      {/* Footer — light: editorial 簡約 / dark: 保留現狀 */}
+      <footer className="border-t border-[var(--color-border)] mt-8" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="container-wide py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Brand */}
             <div>
-              <h3 className="text-lg font-heading font-bold mb-3" style={{ color: "var(--color-primary)" }}>
+              <h3 className="text-lg mb-3 font-bold dark:font-heading" style={{ color: "var(--color-primary)" }}>
                 PaulFun
               </h3>
               <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
@@ -425,7 +437,7 @@ export default function PublicLayout({
 
             {/* Links */}
             <div>
-              <h4 className="text-sm font-medium mb-3" style={{ color: "var(--color-text)" }}>快速連結</h4>
+              <h4 className="label-spaced mb-3 text-[var(--color-text)] dark:text-sm dark:font-medium dark:normal-case dark:tracking-normal">快速連結</h4>
               <div className="space-y-2">
                 <Link
                   href="/"
@@ -444,7 +456,7 @@ export default function PublicLayout({
 
             {/* Tech */}
             <div>
-              <h4 className="text-sm font-medium mb-3" style={{ color: "var(--color-text)" }}>技術棧</h4>
+              <h4 className="label-spaced mb-3 text-[var(--color-text)] dark:text-sm dark:font-medium dark:normal-case dark:tracking-normal">技術棧</h4>
               <div className="flex flex-wrap gap-2">
                 {["Next.js", "Go", "Tiptap", "TailwindCSS"].map((tech) => (
                   <span

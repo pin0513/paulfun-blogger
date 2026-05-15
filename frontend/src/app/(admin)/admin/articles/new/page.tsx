@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
+import { uploadMedia } from "@/lib/api/media";
 import { createArticle, getCategories, getTags } from "@/lib/api/articles";
 
 interface Category {
@@ -150,6 +151,13 @@ export default function NewArticlePage() {
                 content={content}
                 onChange={setContent}
                 placeholder="開始撰寫你的文章..."
+                uploadImage={async (file) => {
+                  const res = await uploadMedia(file);
+                  if (!res.success || !res.data) {
+                    throw new Error(res.message || "上傳失敗");
+                  }
+                  return res.data.url;
+                }}
               />
             </div>
           </div>

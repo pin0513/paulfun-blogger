@@ -1,30 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Huninn&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Light Theme (default) ===== */
+/* ===== Light Theme — Editorial Newspaper (NYT-inspired) ===== */
 :root {
-  --color-bg: #FFFFFF;
-  --color-surface: #F7F7F8;
-  --color-surface-elevated: #FFFFFF;
-  --color-text: #1A1A1A;
-  --color-text-secondary: #4A4A4A;
-  --color-text-muted: #6B7280;
-  --color-primary: #0891B2;
-  --color-secondary: #6D28D9;
-  --color-accent: #DB2777;
-  --color-border: #E5E7EB;
-  --color-code-bg: #F3F4F6;
-  --color-tag: #0891B2;
-  --color-category: #6D28D9;
-  --color-meta: #6B7280;
+  --color-bg: #f9f8f6;              /* 米白，略帶黃調，紙感 */
+  --color-bg-secondary: #f5f4f2;    /* 稍深米白 */
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-text: #333333;            /* 深灰，非純黑 */
+  --color-text-secondary: #555555;
+  --color-text-muted: #999999;
+  --color-primary: #326891;         /* NYT 藍，沉穩 */
+  --color-secondary: #121212;       /* 近黑，作為 accent */
+  --color-accent: #121212;
+  --color-border: #dddddd;
+  --color-border-heavy: #121212;    /* 報紙雙線分隔用 */
+  --color-code-bg: #f5f4f2;
+  --color-tag: #555555;
+  --color-category: #121212;
+  --color-meta: #999999;
 }
 
-/* ===== Dark Theme ===== */
+/* ===== Dark Theme — Cyberpunk (保留個性) ===== */
 .dark {
   --color-bg: #0A0A0F;
+  --color-bg-secondary: #131322;
   --color-surface: #1A1A2E;
   --color-surface-elevated: #22223A;
   --color-text: #E4E4E7;
@@ -34,6 +37,7 @@
   --color-secondary: #7C3AED;
   --color-accent: #FF006E;
   --color-border: #27273A;
+  --color-border-heavy: #00D4FF;
   --color-code-bg: #12121F;
   --color-tag: #22D3EE;
   --color-category: #A78BFA;
@@ -51,6 +55,16 @@
     font-feature-settings: "palt" 1;
     color: var(--color-text);
     background-color: var(--color-bg);
+  }
+
+  /* Light mode 用 Huninn 圓體，dark mode 用 Inter（保留 cyberpunk 機械感） */
+  :root body {
+    font-family: 'Huninn', 'Noto Sans TC', sans-serif;
+    line-height: 1.7;
+  }
+  .dark body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    line-height: 1.6;
   }
 
   .dark body {
@@ -159,19 +173,23 @@
     @apply shadow-soft;
   }
 
+  /* Light mode: editorial 風（方正、零陰影、近黑 hover） */
   .card-glow {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    @apply rounded-lg p-6 transition-all duration-300 shadow-card-light;
+    border-radius: 3px;
+    box-shadow: none;
+    @apply p-6 transition-all duration-150;
   }
   .card-glow:hover {
-    border-color: var(--color-primary);
-    @apply shadow-card-light-hover;
+    border-color: var(--color-border-heavy);
   }
+  /* Dark mode: 保留原 cyberpunk glow */
   .dark .card-glow {
-    @apply shadow-none;
+    @apply rounded-lg p-6 transition-all duration-300 shadow-none;
   }
   .dark .card-glow:hover {
+    border-color: var(--color-primary);
     @apply shadow-glow;
   }
 
@@ -232,6 +250,61 @@
     text-wrap: balance;
   }
 
+  /* ===== Editorial Newspaper utilities ===== */
+
+  /* 雙線分隔（核心報紙語言）— light mode 才生效；dark mode fallback 為 1px 漸層 */
+  .divider-double {
+    border-bottom: 3px double var(--color-border-heavy);
+  }
+  .dark .divider-double {
+    border-bottom: 1px solid var(--color-border);
+    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: bottom;
+  }
+
+  /* 小字大氣感：標籤、分類、日期 — letter-spacing 是質感來源 */
+  .label-spaced {
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 11px;
+    font-weight: 400;
+  }
+  .label-spaced-lg {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  /* Editorial 卡片：light mode 零陰影方正，dark mode 自動回到 cyberpunk glow */
+  .editorial-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    box-shadow: none;
+    transition: border-color 0.15s ease;
+  }
+  .editorial-card:hover {
+    border-color: var(--color-border-heavy);
+  }
+  .dark .editorial-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .dark .editorial-card:hover {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+    border-color: var(--color-primary);
+  }
+
+  /* 報紙 masthead 字體 — Logo / 大標 */
+  .font-masthead {
+    font-family: 'Noto Serif TC', 'Source Serif Pro', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
   /* Animated gradient background */
   .bg-animated-gradient {
     background: linear-gradient(-45deg, #0A0A0F, #1A1A2E, #0A0A0F, #1A1A2E);
@@ -257,21 +330,35 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ===== prose-article: Medium-like typography ===== */
+  /* ===== prose-article: Editorial Newspaper typography (light mode) ===== */
+  /*  line-height 1.8 — 長文閱讀友善（參考 ChemistryTimes）                  */
+  /*  max-width 720px — 報紙專欄寬度                                        */
+  /*  font-weight 400 — 內文一律 regular，避免到處粗體                       */
   .prose-article {
-    font-family: 'Noto Serif TC', Georgia, serif;
+    font-family: 'Huninn', 'Noto Serif TC', Georgia, serif;
     font-size: var(--article-font-size, 20px);
-    line-height: 1.72;
+    line-height: 1.8;
+    font-weight: 400;
     color: var(--color-text);
-    max-width: 680px;
+    max-width: 720px;
+  }
+  .dark .prose-article {
+    font-family: 'Noto Serif TC', Georgia, serif;
+    line-height: 1.72;
   }
 
   .prose-article h1,
   .prose-article h2,
   .prose-article h3 {
+    font-family: 'Huninn', 'Noto Sans TC', sans-serif;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .dark .prose-article h1,
+  .dark .prose-article h2,
+  .dark .prose-article h3 {
     font-family: 'Inter', 'Noto Sans TC', sans-serif;
     font-weight: 700;
-    color: var(--color-text);
   }
 
   .prose-article h1 {
@@ -306,11 +393,17 @@
   }
 
   .prose-article blockquote {
-    border-left: 3px solid var(--color-primary);
-    padding-left: 20px;
+    border-left: 3px solid var(--color-accent);
+    padding: 16px 20px;
+    background: var(--color-bg-secondary);
     font-style: italic;
     color: var(--color-text-secondary);
     margin: 32px 0;
+  }
+  .dark .prose-article blockquote {
+    border-left-color: var(--color-primary);
+    background: transparent;
+    padding: 0 0 0 20px;
   }
 
   .prose-article code {

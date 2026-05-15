@@ -65,3 +65,4 @@ images/
 # Misc
 *.tmp
 *.temp
+.gstack/

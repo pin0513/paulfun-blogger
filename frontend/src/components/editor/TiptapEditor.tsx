@@ -1,25 +1,112 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
-  onImageUpload?: () => void;
+  /** 上傳圖片並回傳最終 URL。若未提供則不支援圖片貼上/拖曳/toolbar 按鈕 */
+  uploadImage?: (file: File) => Promise<string>;
   placeholder?: string;
+}
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 後端限制 5MB
+
+function filterImageFiles(files: FileList | File[] | null | undefined): File[] {
+  if (!files) return [];
+  const result: File[] = [];
+  for (const f of Array.from(files)) {
+    if (f.type.startsWith("image/")) result.push(f);
+  }
+  return result;
+}
+
+async function uploadAndSwap(
+  editor: Editor,
+  file: File,
+  blobUrl: string,
+  uploadImage: (file: File) => Promise<string>,
+) {
+  try {
+    if (file.size > MAX_IMAGE_SIZE) {
+      throw new Error(`檔案過大（${(file.size / 1024 / 1024).toFixed(1)}MB），上限 5MB`);
+    }
+    const realUrl = await uploadImage(file);
+    // 找到 blob 節點位置，replace src attr
+    let found = false;
+    editor.state.doc.descendants((node, pos) => {
+      if (found) return false;
+      if (node.type.name === "image" && node.attrs.src === blobUrl) {
+        editor
+          .chain()
+          .setNodeSelection(pos)
+          .updateAttributes("image", { src: realUrl })
+          .run();
+        found = true;
+        return false;
+      }
+      return true;
+    });
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    // 失敗：刪掉該 blob 節點
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === "image" && node.attrs.src === blobUrl) {
+        const tr = editor.state.tr.delete(pos, pos + node.nodeSize);
+        editor.view.dispatch(tr);
+        return false;
+      }
+      return true;
+    });
+    const msg = err instanceof Error ? err.message : "上傳失敗";
+    alert(`圖片上傳失敗：${msg}`);
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+}
+
+function insertImagesWithUpload(
+  editor: Editor,
+  files: File[],
+  uploadImage: (file: File) => Promise<string>,
+) {
+  if (!files.length) return;
+  // 1. 先把所有圖片用 blob URL 插進編輯器（立即預覽）
+  const entries = files.map((file) => ({
+    file,
+    blobUrl: URL.createObjectURL(file),
+  }));
+  const nodes = entries.map(({ blobUrl }) => ({
+    type: "image" as const,
+    attrs: { src: blobUrl },
+  }));
+  editor.chain().focus().insertContent(nodes).run();
+
+  // 2. 並行上傳，成功後替換 src、失敗刪除節點
+  entries.forEach(({ file, blobUrl }) => {
+    void uploadAndSwap(editor, file, blobUrl, uploadImage);
+  });
 }
 
 export function TiptapEditor({
   content,
   onChange,
-  onImageUpload,
+  uploadImage,
   placeholder = "開始撰寫你的文章...",
 }: TiptapEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // editorProps 在 useEditor 初始化時建立、晚於 return editor；用 ref 作為後期取值的間接層
+  const editorRef = useRef<Editor | null>(null);
+  const uploadRef = useRef(uploadImage);
+  useEffect(() => {
+    uploadRef.current = uploadImage;
+  }, [uploadImage]);
+
   const editor = useEditor({
     immediatelyRender: false, // 避免 SSR hydration mismatch
     extensions: [
@@ -49,11 +136,37 @@ export function TiptapEditor({
         class:
           "prose-warm min-h-[400px] max-w-none outline-none px-4 py-3",
       },
+      handlePaste: (_view, event) => {
+        const upload = uploadRef.current;
+        const ed = editorRef.current;
+        if (!upload || !ed) return false;
+        const files = filterImageFiles(event.clipboardData?.files);
+        if (files.length === 0) return false;
+        event.preventDefault();
+        insertImagesWithUpload(ed, files, upload);
+        return true;
+      },
+      handleDrop: (_view, event) => {
+        const upload = uploadRef.current;
+        const ed = editorRef.current;
+        if (!upload || !ed) return false;
+        const dropEvent = event as DragEvent;
+        const files = filterImageFiles(dropEvent.dataTransfer?.files);
+        if (files.length === 0) return false;
+        dropEvent.preventDefault();
+        insertImagesWithUpload(ed, files, upload);
+        return true;
+      },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
   });
+
+  // 把 editor 存進 ref，讓 editorProps 裡的 paste/drop handler 拿得到
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -70,6 +183,21 @@ export function TiptapEditor({
 
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
+
+  const handleImagePick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!editor || !uploadImage) return;
+      const files = filterImageFiles(e.target.files);
+      if (files.length > 0) insertImagesWithUpload(editor, files, uploadImage);
+      // 清空 value，讓同一張圖可以再次選取
+      e.target.value = "";
+    },
+    [editor, uploadImage],
+  );
 
   if (!editor) {
     return (
@@ -172,10 +300,20 @@ export function TiptapEditor({
           🔗
         </ToolbarButton>
 
-        {onImageUpload && (
-          <ToolbarButton onClick={onImageUpload} title="插入圖片">
-            🖼️
-          </ToolbarButton>
+        {uploadImage && (
+          <>
+            <ToolbarButton onClick={handleImagePick} title="插入圖片（也可貼上或拖曳）">
+              🖼️
+            </ToolbarButton>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </>
         )}
 
         <div className="w-px bg-border mx-1" />

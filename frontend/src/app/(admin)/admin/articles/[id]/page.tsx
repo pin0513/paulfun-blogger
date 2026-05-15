@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
+import { uploadMedia } from "@/lib/api/media";
 import {
   getAdminArticle,
   patchArticle,
@@ -349,6 +350,13 @@ export default function EditArticlePage() {
                 content={content}
                 onChange={setContent}
                 placeholder="開始撰寫你的文章..."
+                uploadImage={async (file) => {
+                  const res = await uploadMedia(file);
+                  if (!res.success || !res.data) {
+                    throw new Error(res.message || "上傳失敗");
+                  }
+                  return res.data.url;
+                }}
               />
             </div>
           </div>

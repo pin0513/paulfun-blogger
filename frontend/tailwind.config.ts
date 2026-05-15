@@ -60,12 +60,17 @@ const config: Config = {
         body: ["Inter", "Noto Sans TC", "sans-serif"],
         article: ["Noto Serif TC", "Georgia", "serif"],
         mono: ["JetBrains Mono", "monospace"],
+        // Editorial fonts (light mode)
+        huninn: ["Huninn", "Noto Sans TC", "sans-serif"],
+        masthead: ["Noto Serif TC", "Source Serif Pro", "Georgia", "serif"],
       },
       borderRadius: {
         sm: "6px",
         md: "8px",
         lg: "12px",
         xl: "16px",
+        // Editorial — 報紙風方正
+        editorial: "3px",
       },
       boxShadow: {
         soft: "0 2px 8px rgba(0, 212, 255, 0.1)",
@@ -85,6 +90,7 @@ const config: Config = {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "gradient-shift": "gradient-shift 3s ease infinite",
         "card-enter": "card-enter 0.4s ease-out forwards",
+        "slide-down": "slide-down 0.2s ease-out",
       },
       keyframes: {
         "pulse-glow": {
@@ -97,6 +103,10 @@ const config: Config = {
         },
         "card-enter": {
           "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-down": {
+          "0%": { opacity: "0", transform: "translateY(-8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
