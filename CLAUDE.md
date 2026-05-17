@@ -38,10 +38,11 @@
 | 項目 | 內容 |
 |------|------|
 | Email | `pin0513@gmail.com` |
-| 密碼 | `Test1234` |
+| 密碼 | dev 環境見 `backend-go/db/seed.go`；production 改用個人密碼管理器（**不要寫進 repo**）|
 | 角色 | admin（完整後台權限）|
 
 > 首次啟動 Go server 時，若資料庫為空，會自動執行 `db/seed.go` 建立上述帳號與預設分類/標籤/文章。
+> ⚠️ Production 帳號的密碼請以個人密碼管理器內的記錄為準，所有 commit / doc 不該出現明文。
 
 ## 開發指令
 
@@ -125,7 +126,7 @@ Token 透過登入取得，有效期預設 24 小時（HS256 JWT）。
 
 ```json
 // Request
-{ "email": "pin0513@gmail.com", "password": "Test1234" }
+{ "email": "pin0513@gmail.com", "password": "<your-password>" }
 
 // Response 200
 {
@@ -347,10 +348,11 @@ slug 重複則跳過（不覆蓋）。
 ### 6. AI 發文工作流程範例
 
 ```bash
-# Step 1: 登入取得 token
+# Step 1: 登入取得 token（密碼從 env 讀，避免 shell 歷史留下明文）
+# export PAULFUN_ADMIN_PASSWORD=...  # 從密碼管理器複製
 TOKEN=$(curl -s -X POST https://paulfun.net/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"pin0513@gmail.com","password":"Test1234"}' \
+  -d "{\"email\":\"pin0513@gmail.com\",\"password\":\"$PAULFUN_ADMIN_PASSWORD\"}" \
   | jq -r '.data.token')
 
 # Step 2: 查詢現有分類與標籤
@@ -417,10 +419,10 @@ docker-compose -f docker-compose.dev.yml up -d
 # 2. 啟動 Go server
 cd backend-go && go run ./cmd/server/main.go
 
-# 3. 測試登入
+# 3. 測試登入（dev seed 密碼見 backend-go/db/seed.go）
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"pin0513@gmail.com","password":"Test1234"}'
+  -d '{"email":"pin0513@gmail.com","password":"<seed-password>"}'
 
 # 4. 測試文章列表
 curl http://localhost:8080/api/articles
