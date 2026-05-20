@@ -114,6 +114,9 @@ export function TiptapEditor({
         heading: {
           levels: [1, 2, 3],
         },
+        // Tiptap v3 的 StarterKit 已內建 link；停用它，改用下方額外
+        // 設定過 openOnClick / class 的 Link extension，避免擴充名稱重複。
+        link: false,
       }),
       Image.configure({
         HTMLAttributes: {
