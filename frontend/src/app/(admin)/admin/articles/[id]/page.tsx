@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { TiptapEditor } from "@/components/editor/TiptapEditor";
+import { ContentEditor } from "@/components/editor/ContentEditor";
 import { uploadMedia } from "@/lib/api/media";
 import {
   getAdminArticle,
@@ -340,25 +340,18 @@ export default function EditArticlePage() {
               />
             </div>
 
-            <div className="card p-0">
-              <div className="px-4 py-3 border-b border-border">
-                <label className="block text-sm font-medium text-text">
-                  內容 <span className="text-red-500">*</span>
-                </label>
-              </div>
-              <TiptapEditor
-                content={content}
-                onChange={setContent}
-                placeholder="開始撰寫你的文章..."
-                uploadImage={async (file) => {
-                  const res = await uploadMedia(file);
-                  if (!res.success || !res.data) {
-                    throw new Error(res.message || "上傳失敗");
-                  }
-                  return res.data.url;
-                }}
-              />
-            </div>
+            <ContentEditor
+              content={content}
+              onChange={setContent}
+              placeholder="開始撰寫你的文章..."
+              uploadImage={async (file) => {
+                const res = await uploadMedia(file);
+                if (!res.success || !res.data) {
+                  throw new Error(res.message || "上傳失敗");
+                }
+                return res.data.url;
+              }}
+            />
           </div>
 
           {/* Sidebar */}
