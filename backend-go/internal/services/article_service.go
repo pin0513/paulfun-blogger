@@ -62,7 +62,7 @@ func (s *ArticleService) GetArticles(q dto.ArticleQueryParams, includeUnpublishe
 
 	sortBy := strings.ToLower(q.GetSortBy())
 	dir := "DESC"
-	if !q.Descending {
+	if !q.GetDescending() {
 		dir = "ASC"
 	}
 	switch sortBy {

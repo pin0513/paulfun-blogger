@@ -133,7 +133,9 @@ type ArticleQueryParams struct {
 	Page       int    `form:"page"`
 	PageSize   int    `form:"pageSize"`
 	SortBy     string `form:"sortBy"`
-	Descending bool   `form:"descending"`
+	// Descending 用 *bool 才能區分「沒傳」(nil) 與「明確傳 false」。
+	// 沒傳時透過 GetDescending() 預設 true（符合 CLAUDE.md 文件）。
+	Descending *bool  `form:"descending"`
 	CategoryID *uint  `form:"categoryId"`
 	TagID      *uint  `form:"tagId"`
 	Search     string `form:"search"`
@@ -159,4 +161,12 @@ func (q *ArticleQueryParams) GetSortBy() string {
 		return "createdAt"
 	}
 	return q.SortBy
+}
+
+// GetDescending 預設 true；只有當呼叫端明確傳 descending=false 才回傳 false。
+func (q *ArticleQueryParams) GetDescending() bool {
+	if q.Descending == nil {
+		return true
+	}
+	return *q.Descending
 }
