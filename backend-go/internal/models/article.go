@@ -21,5 +21,8 @@ type Article struct {
 	// Associations
 	Author   User      `gorm:"foreignKey:AuthorID" json:"author"`
 	Category *Category `gorm:"foreignKey:CategoryID" json:"category"`
-	Tags     []Tag     `gorm:"many2many:article_tags;" json:"tags"`
+	// many2many 預設 FK 為 RESTRICT；明寫 CASCADE 讓未來新環境 AutoMigrate
+	// 的 article_tags 一開始就有正確 FK。既有 production DB 的 FK 由
+	// services.DeleteArticle 透過 transaction 手動清 pivot 處理。
+	Tags []Tag `gorm:"many2many:article_tags;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;" json:"tags"`
 }

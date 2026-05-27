@@ -46,9 +46,17 @@ export default function ArticlesPage() {
       const response = await deleteArticle(id);
       if (response.success) {
         fetchArticles();
+      } else {
+        // success=false 但沒 throw：顯示 server 給的 message
+        alert(`刪除失敗：${response.message || "未知錯誤"}`);
       }
     } catch (error) {
+      // axios 5xx / 網路錯誤會 throw 進這裡；之前只 console.error 導致 silent fail
       console.error("Failed to delete article:", error);
+      const msg =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (error instanceof Error ? error.message : "網路錯誤");
+      alert(`刪除失敗：${msg}`);
     }
   };
 

@@ -391,6 +391,14 @@ func (s *ArticleService) RestoreArticle(articleID uint, archiveID uint, userID u
 }
 
 // DeleteArticle 刪除文章（僅作者或 admin 可操作）。
+//
+// 必須在 transaction 內清理：
+//  1. article_tags pivot rows — m2m 預設 FK 是 RESTRICT，不先清會 FK violation
+//  2. article_archives — model 上沒設 FK，但留著是 orphan 垃圾資料
+//  3. article 本身
+//
+// 此前未做 (1) 導致有 tags 的文章 hard delete 失敗回 500（GORM many2many 預設
+// FK 無 ON DELETE CASCADE）。
 func (s *ArticleService) DeleteArticle(id uint, userID uint) error {
 	var article models.Article
 	if err := s.db.First(&article, id).Error; err != nil {
@@ -401,10 +409,18 @@ func (s *ArticleService) DeleteArticle(id uint, userID uint) error {
 		return err
 	}
 
-	if err := s.db.Delete(&article).Error; err != nil {
-		return err
-	}
-	return nil
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// (1) 清 m2m pivot
+		if err := tx.Model(&article).Association("Tags").Clear(); err != nil {
+			return err
+		}
+		// (2) 清 archives（避免 dangling orphan rows）
+		if err := tx.Where("article_id = ?", id).Delete(&models.ArticleArchive{}).Error; err != nil {
+			return err
+		}
+		// (3) 刪 article 本身
+		return tx.Delete(&article).Error
+	})
 }
 
 // PublishArticle 發佈文章（立即或排程）。
