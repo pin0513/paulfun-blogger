@@ -123,6 +123,45 @@ func generateRefreshToken() string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
+// AILoginExchange 用 SAT 明文 token 換短壽 JWT (1h)。
+// 失敗（token 無效 / 過期 / 撤銷 / linked user 停用）一律回 apierror.ErrUnauthorized；
+// 細節 reason 由 SATService 在 server log 記錄。
+// JWT 帶 SatID claim，方便 audit / handler 區分來源（spec v3 R7）。
+func (s *AuthService) AILoginExchange(token string, satSvc *SATService) (*dto.AILoginResponse, error) {
+	sat, user, err := satSvc.ExchangeForUser(token)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	exp := now.Add(1 * time.Hour) // SAT-issued JWT 短壽 1h（spec v3 R5）
+	claims := middleware.Claims{
+		Sub:   fmt.Sprintf("%d", user.ID),
+		Email: user.Email,
+		Name:  user.DisplayName,
+		Role:  user.Role,
+		SatID: sat.ID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   fmt.Sprintf("%d", user.ID),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			Issuer:    "PaulFunBlogger",
+			Audience:  jwt.ClaimStrings{"PaulFunBloggerUsers"},
+		},
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := jwtToken.SignedString([]byte(s.cfg.JWTSecret))
+	if err != nil {
+		return nil, fmt.Errorf("Token 生成失敗: %w", err)
+	}
+
+	return &dto.AILoginResponse{
+		Token:     signed,
+		ExpiresAt: exp,
+		User:      mapToUserDto(user),
+	}, nil
+}
+
 // mapToUserDto 轉換 User model 為 DTO（在 services 套件共用）。
 func mapToUserDto(u *models.User) dto.UserDto {
 	return dto.UserDto{

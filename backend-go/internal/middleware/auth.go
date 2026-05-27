@@ -13,6 +13,7 @@ type Claims struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 	Role  string `json:"role"`
+	SatID uint   `json:"sat_id,omitempty"` // 非零 = JWT 來自 service-account-token exchange（spec v3）
 	jwt.RegisteredClaims
 }
 

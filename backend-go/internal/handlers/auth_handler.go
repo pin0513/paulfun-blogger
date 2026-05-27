@@ -13,13 +13,35 @@ import (
 	"github.com/paulhuang/paulfun-blogger/internal/services"
 )
 
-// AuthHandler 處理認證相關 API（登入、註冊、取得目前使用者）。
+// AuthHandler 處理認證相關 API（登入、註冊、取得目前使用者、AI-login）。
 type AuthHandler struct {
 	svc *services.AuthService
+	sat *services.SATService // for AI login
 }
 
-func NewAuthHandler(svc *services.AuthService) *AuthHandler {
-	return &AuthHandler{svc: svc}
+func NewAuthHandler(svc *services.AuthService, sat *services.SATService) *AuthHandler {
+	return &AuthHandler{svc: svc, sat: sat}
+}
+
+// POST /api/auth/ai-login
+// 用 service-account-token (SAT) 換 1h 短壽 JWT，給 AI agent / CI / 外部 script 使用。
+// 失敗一律回 422 + generic message（同 /login 慣例），避免 enumerate token 狀態。
+func (h *AuthHandler) AILogin(c *gin.Context) {
+	var req dto.AILoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("請求格式錯誤: "+err.Error()))
+		return
+	}
+	resp, err := h.svc.AILoginExchange(req.Token, h.sat)
+	if err != nil {
+		if errors.Is(err, apierror.ErrUnauthorized) {
+			c.JSON(http.StatusUnprocessableEntity, dto.Fail[any]("invalid credentials"))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.Fail[any]("伺服器錯誤"))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Ok(resp, "ai-login 成功"))
 }
 
 // POST /api/auth/login

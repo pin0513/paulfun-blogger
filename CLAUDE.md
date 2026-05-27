@@ -345,7 +345,111 @@ slug 重複則跳過（不覆蓋）。
 
 ---
 
-### 6. AI 發文工作流程範例
+### 6. AI Login API
+
+#### POST `/api/auth/ai-login` — 用 Service Account Token 換短壽 JWT
+
+給 AI agent / CI / 外部 script 使用，**不需要人類密碼**。換得的 JWT 短壽 1 小時。
+
+```json
+// Request
+{ "token": "sat_xxx..." }
+
+// Response 200
+{
+  "success": true,
+  "message": "ai-login 成功",
+  "data": {
+    "token": "eyJhbGc...",                           // JWT (1h 有效)
+    "expiresAt": "2026-05-27T15:00:00Z",
+    "user": { "id": 1, "email": "...", "role": "admin" }
+  }
+}
+
+// Response 422 (token 無效 / 過期 / 被停用 / 對應 user 失效)
+{ "success": false, "message": "invalid credentials" }
+```
+
+- JWT 內含 `sat_id` claim，後續 API 呼叫跟 user-login JWT 一樣帶 `Authorization: Bearer`
+- 停用 SAT 後最多延遲 1 小時生效（短壽 JWT 自然過期）
+- SAT 衍生 JWT **不能**用來呼叫 `/api/admin/service-account-tokens/*`（會回 403）
+
+設計細節見 `docs/specs/2026-05-26-service-account-token-design.md`。
+
+### 7. Service Account Token 管理 API（需 admin JWT；**SAT-issued JWT 會被拒**）
+
+#### GET `/api/admin/service-account-tokens` — 列出全部 SAT
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 1,
+      "name": "Claude Code 發文",
+      "tokenPrefix": "sat_OHBZeTK4",      // 識別用前 12 字
+      "isActive": true,
+      "expiresAt": null,                   // null = 永不過期
+      "lastUsedAt": "2026-05-27T02:29:20Z",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
+}
+```
+
+#### POST `/api/admin/service-account-tokens` — 建立 SAT
+
+```json
+// Request
+{
+  "name": "Claude Code 發文",
+  "userId": 1,
+  "expiresAt": null                       // null = 永不過期，或 ISO 字串
+}
+
+// Response 201 — 含明文 token，**僅顯示一次**
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "tokenPrefix": "sat_OHBZeTK4",
+    "token": "sat_OHBZeTK4...完整 47 字...", // 之後永遠看不到
+    ...
+  }
+}
+```
+
+#### PATCH `/api/admin/service-account-tokens/:id` — 更新 SAT
+
+```json
+// Request 全部欄位選填
+{ "name": "改名", "expiresAt": null, "isActive": false }
+```
+
+#### DELETE `/api/admin/service-account-tokens/:id` — 停用 SAT
+
+實際是 **soft delete**（`isActive=false`），保留 row 供 audit。
+
+#### AI 端使用範例
+
+```bash
+# 1. 從密碼管理器拿 SAT
+export PAULFUN_SAT="sat_xxx..."
+
+# 2. 換 JWT
+JWT=$(curl -s -X POST https://paulfun.net/api/auth/ai-login \
+  -H "Content-Type: application/json" \
+  -d "{\"token\":\"$PAULFUN_SAT\"}" \
+  | jq -r '.data.token')
+
+# 3. 用 JWT 打 admin API（同 admin login 後的用法）
+curl -X GET https://paulfun.net/api/admin/articles \
+  -H "Authorization: Bearer $JWT"
+```
+
+### 8. AI 發文工作流程範例
 
 ```bash
 # Step 1: 登入取得 token（密碼從 env 讀，避免 shell 歷史留下明文）

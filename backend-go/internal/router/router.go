@@ -11,11 +11,13 @@ import (
 )
 
 type Handlers struct {
-	Auth    *handlers.AuthHandler
-	Article *handlers.ArticleHandler
-	Admin   *handlers.AdminHandler
-	Media   *handlers.MediaHandler
-	Import  *handlers.ImportHandler
+	Auth     *handlers.AuthHandler
+	Article  *handlers.ArticleHandler
+	Admin    *handlers.AdminHandler
+	Media    *handlers.MediaHandler
+	Import   *handlers.ImportHandler
+	Category *handlers.CategoryHandler
+	SATAdmin *handlers.SATAdminHandler // service-account-token 管理
 }
 
 func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
@@ -42,6 +44,7 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 	auth := api.Group("/auth")
 	{
 		auth.POST("/login", loginLimiter.Limit(), h.Auth.Login)
+		auth.POST("/ai-login", loginLimiter.Limit(), h.Auth.AILogin) // SAT exchange
 		auth.GET("/me", middleware.AuthRequired(cfg.JWTSecret), h.Auth.Me)
 	}
 
@@ -85,6 +88,18 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.POST("/import/categories", h.Import.ImportCategories)
 		admin.POST("/import/tags", h.Import.ImportTags)
 		admin.POST("/import/articles", h.Import.ImportArticles)
+
+		// Categories CRUD（單筆建立 / 更新 / 刪除）
+		admin.POST("/categories", h.Category.Create)
+		admin.PUT("/categories/:id", h.Category.Update)
+		admin.DELETE("/categories/:id", h.Category.Delete)
+
+		// Service Account Tokens（spec v3 §2.11）
+		// SAT-issued JWT 在 handler 入口被 rejectSATSource 擋下（R7）
+		admin.GET("/service-account-tokens", h.SATAdmin.List)
+		admin.POST("/service-account-tokens", h.SATAdmin.Create)
+		admin.PATCH("/service-account-tokens/:id", h.SATAdmin.Update)
+		admin.DELETE("/service-account-tokens/:id", h.SATAdmin.Delete)
 	}
 
 	return r

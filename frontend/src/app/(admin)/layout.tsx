@@ -9,6 +9,7 @@ const navItems = [
   { href: "/admin", label: "儀表板", icon: "📊" },
   { href: "/admin/articles", label: "文章管理", icon: "📝" },
   { href: "/admin/media", label: "媒體庫", icon: "🖼️" },
+  { href: "/admin/tokens", label: "Tokens", icon: "🔑" },
 ];
 
 export default function AdminLayout({

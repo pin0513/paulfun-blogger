@@ -43,14 +43,24 @@ func main() {
 	articleSvc := services.NewArticleService(database)
 	mediaSvc := services.NewMediaService(database, store)
 	importSvc := services.NewImportService(database)
+	categorySvc := services.NewCategoryService(database)
+	satSvc := services.NewSATService(database)
+
+	// 5a. 確保「未分類」固定分類存在
+	// DELETE 任何分類時，文章會被 reassign 到此處；本身不可刪。
+	if err := categorySvc.EnsureUncategorized(); err != nil {
+		log.Fatalf("EnsureUncategorized 失敗: %v", err)
+	}
 
 	// 6. 初始化 Handlers
 	h := router.Handlers{
-		Auth:    handlers.NewAuthHandler(authSvc),
-		Article: handlers.NewArticleHandler(articleSvc),
-		Admin:   handlers.NewAdminHandler(articleSvc),
-		Media:   handlers.NewMediaHandler(mediaSvc),
-		Import:  handlers.NewImportHandler(importSvc),
+		Auth:     handlers.NewAuthHandler(authSvc, satSvc),
+		Article:  handlers.NewArticleHandler(articleSvc),
+		Admin:    handlers.NewAdminHandler(articleSvc),
+		Media:    handlers.NewMediaHandler(mediaSvc),
+		Import:   handlers.NewImportHandler(importSvc),
+		Category: handlers.NewCategoryHandler(categorySvc),
+		SATAdmin: handlers.NewSATAdminHandler(satSvc),
 	}
 
 	// 7. 設定路由

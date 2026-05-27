@@ -66,3 +66,6 @@ images/
 *.tmp
 *.temp
 .gstack/
+
+# Codex session state (per-machine)
+.context/
