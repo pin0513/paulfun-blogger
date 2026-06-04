@@ -574,3 +574,78 @@
     }
   }
 }
+
+/* ============================================================
+ * Article inline-style callouts — dark mode overrides
+ * ============================================================
+ * 文章作者常在 content 內嵌 <style> 寫 .article-callout / .article-bad
+ * 等淺色背景的 callout。在 dark mode 下淺色 + 繼承的淺色文字會幾乎隱形。
+ *
+ * 此處規則：
+ *   • 不放在 @layer 內 → 取得標準 cascade 優先級
+ *   • 用 .dark X 兩個 class 的 specificity (2) 蓋過文章 inline `.X` (1)
+ *   • 只在 dark mode 觸發；light mode 沿用作者原本配色
+ *   • 顏色與 cyberpunk dark palette 對齊（不打破系統美感）
+ * ============================================================ */
+
+.dark .prose-article .article-callout {
+  background: linear-gradient(135deg, #2a2545, #322a55);
+  color: var(--color-text);
+  border-left-color: #8b7dff;
+}
+
+.dark .prose-article .article-bad {
+  background: #3a1f1f;
+  color: #fecaca;
+  border-left-color: #f87171;
+}
+
+.dark .prose-article .article-good {
+  background: #1f3326;
+  color: #bbf7d0;
+  border-left-color: #4ade80;
+}
+
+.dark .prose-article .article-warn {
+  background: #3a2f12;
+  color: #fde68a;
+  border-left-color: #fbbf24;
+}
+
+/* .article-quote 在 light mode 就是深藍配白字，dark mode 維持 */
+.dark .prose-article .article-quote {
+  background: linear-gradient(135deg, #1e293b, #2a3447);
+  border: 1px solid var(--color-border);
+}
+
+/* article-stat 已是深藍配白字，可用，但邊框 polish */
+.dark .prose-article .article-stat {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 表格 header / cell：文章內嵌的淺灰 #f3f4f6 在 dark 下隱形 */
+.dark .prose-article table.article-table th {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-bottom-color: var(--color-border);
+}
+
+.dark .prose-article table.article-table td {
+  border-top-color: var(--color-border);
+  color: var(--color-text);
+}
+
+/* Forcing Function grid 卡片：原 white 背景 */
+.dark .prose-article .ff-item {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.dark .prose-article .ff-item .ff-desc {
+  color: var(--color-text-secondary);
+}
+
+.dark .prose-article .ff-item .ff-title {
+  color: var(--color-primary);
+}
