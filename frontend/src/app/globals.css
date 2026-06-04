@@ -22,6 +22,50 @@
   --color-tag: #555555;
   --color-category: #121212;
   --color-meta: #999999;
+
+  /* ===== Article callouts — semantic palette (light) =====
+   * 4 個語意角色 + 共用結構 token；每色都通過 WCAG AA 4.5:1
+   * 同一 hue family 跨 light/dark 維持語意連續性
+   * info=紫(#6366f1)、danger=紅(#dc2626)、success=綠(#16a34a)、warn=琥珀(#f59e0b)
+   */
+  --callout-info-bg: #ede9fe;
+  --callout-info-bg-end: #f3e8ff;     /* gradient 收尾 */
+  --callout-info-text: #1e1b3a;        /* 深紫黑，對 #ede9fe 對比 ~13:1 */
+  --callout-info-border: #6366f1;
+  --callout-info-heading: #4c3a9c;     /* 比 text 偏紫，標題用 */
+
+  --callout-danger-bg: #fef2f2;
+  --callout-danger-text: #3f1212;      /* 深紅黑，對 #fef2f2 對比 ~14:1 */
+  --callout-danger-border: #dc2626;
+  --callout-danger-heading: #991b1b;
+
+  --callout-success-bg: #f0fdf4;
+  --callout-success-text: #0f2818;
+  --callout-success-border: #16a34a;
+  --callout-success-heading: #166534;
+
+  --callout-warn-bg: #fffbeb;
+  --callout-warn-text: #3a2a05;
+  --callout-warn-border: #f59e0b;
+  --callout-warn-heading: #92400e;
+
+  /* quote / stat 區（深底卡片，light/dark 都用深底） */
+  --callout-quote-bg-start: #1e293b;
+  --callout-quote-bg-end: #334155;
+  --callout-quote-text: #f8fafc;
+  --callout-quote-meta: #c7d2fe;
+
+  --callout-stat-bg-start: #312e81;
+  --callout-stat-bg-end: #4338ca;
+  --callout-stat-text: #ffffff;
+  --callout-stat-meta: #c7d2fe;
+
+  /* table / card 結構 */
+  --callout-card-bg: #ffffff;
+  --callout-card-border: #e5e7eb;
+  --callout-table-th-bg: #f3f4f6;
+  --callout-table-th-text: #1f2937;
+  --callout-table-border: #e5e7eb;
 }
 
 /* ===== Dark Theme — Cyberpunk (保留個性) ===== */
@@ -42,6 +86,49 @@
   --color-tag: #22D3EE;
   --color-category: #A78BFA;
   --color-meta: #9CA3AF;
+
+  /* ===== Article callouts — semantic palette (dark) =====
+   * 同色相但反轉明度：bg L=15-22%、text L=85-92%
+   * 飽和度比 light 略低，避免 dark 環境刺眼
+   * 全部對比 ≥ 7:1（WCAG AAA）
+   */
+  --callout-info-bg: #2a2545;          /* 深紫，與 cyberpunk #7C3AED secondary 同 hue */
+  --callout-info-bg-end: #322a55;
+  --callout-info-text: #e8e0ff;        /* 對比 #2a2545 ~11:1 */
+  --callout-info-border: #8b7dff;
+  --callout-info-heading: #c4b5fd;
+
+  --callout-danger-bg: #3a1f1f;
+  --callout-danger-text: #fecaca;       /* 對比 #3a1f1f ~9:1 */
+  --callout-danger-border: #f87171;
+  --callout-danger-heading: #fca5a5;
+
+  --callout-success-bg: #1a3326;
+  --callout-success-text: #bbf7d0;
+  --callout-success-border: #4ade80;
+  --callout-success-heading: #86efac;
+
+  --callout-warn-bg: #3a2f12;
+  --callout-warn-text: #fde68a;
+  --callout-warn-border: #fbbf24;
+  --callout-warn-heading: #fcd34d;
+
+  /* quote / stat 維持深底（兩個 mode 共用） */
+  --callout-quote-bg-start: #1e293b;
+  --callout-quote-bg-end: #2a3447;
+  --callout-quote-text: #f1f5f9;
+  --callout-quote-meta: #c7d2fe;
+
+  --callout-stat-bg-start: #312e81;
+  --callout-stat-bg-end: #4338ca;
+  --callout-stat-text: #ffffff;
+  --callout-stat-meta: #c7d2fe;
+
+  --callout-card-bg: #1A1A2E;          /* 用 --color-surface 同色 */
+  --callout-card-border: #27273A;
+  --callout-table-th-bg: #1A1A2E;
+  --callout-table-th-text: #E4E4E7;
+  --callout-table-border: #27273A;
 }
 
 /* ===== Font Size System ===== */
@@ -576,76 +663,164 @@
 }
 
 /* ============================================================
- * Article inline-style callouts — dark mode overrides
+ * Article rich callouts — semantic design system
  * ============================================================
- * 文章作者常在 content 內嵌 <style> 寫 .article-callout / .article-bad
- * 等淺色背景的 callout。在 dark mode 下淺色 + 繼承的淺色文字會幾乎隱形。
+ * 4 個語意角色：info（紫）/ danger（紅）/ success（綠）/ warn（琥珀）
+ *           + 3 個結構卡片：quote / stat / ff-item
+ *           + table.article-table 主題化
  *
- * 此處規則：
- *   • 不放在 @layer 內 → 取得標準 cascade 優先級
- *   • 用 .dark X 兩個 class 的 specificity (2) 蓋過文章 inline `.X` (1)
- *   • 只在 dark mode 觸發；light mode 沿用作者原本配色
- *   • 顏色與 cyberpunk dark palette 對齊（不打破系統美感）
+ * 設計原則:
+ *   1. 語意 token 集中在 :root + .dark 區（檔案最上方）
+ *   2. 同 hue family 跨 light/dark 維持語意連續
+ *   3. WCAG AA+ 對比 (light ≥10:1, dark ≥7:1)
+ *   4. 規則放在 @layer 外，specificity 2 (.prose-article .X)
+ *      → 蓋過文章 inline <style> 的 .X (specificity 1)
+ *      → 作者就算寫舊的 inline CSS，仍會被主題化版本接管
+ *   5. light + dark 都覆蓋 → 作者未來無需再寫 inline <style>
  * ============================================================ */
 
-.dark .prose-article .article-callout {
-  background: linear-gradient(135deg, #2a2545, #322a55);
+/* ─── info callout ─── */
+.prose-article .article-callout {
+  background: linear-gradient(135deg, var(--callout-info-bg), var(--callout-info-bg-end));
+  color: var(--callout-info-text);
+  border-left: 5px solid var(--callout-info-border);
+  padding: 18px 22px;
+  border-radius: 10px;
+  margin: 18px 0;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.prose-article .article-callout strong {
+  color: var(--callout-info-heading);
+}
+
+/* ─── danger callout ─── */
+.prose-article .article-bad {
+  background: var(--callout-danger-bg);
+  color: var(--callout-danger-text);
+  border-left: 4px solid var(--callout-danger-border);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+.prose-article .article-bad strong {
+  color: var(--callout-danger-heading);
+}
+
+/* ─── success callout ─── */
+.prose-article .article-good {
+  background: var(--callout-success-bg);
+  color: var(--callout-success-text);
+  border-left: 4px solid var(--callout-success-border);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+.prose-article .article-good strong {
+  color: var(--callout-success-heading);
+}
+
+/* ─── warning callout ─── */
+.prose-article .article-warn {
+  background: var(--callout-warn-bg);
+  color: var(--callout-warn-text);
+  border-left: 4px solid var(--callout-warn-border);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+.prose-article .article-warn strong {
+  color: var(--callout-warn-heading);
+}
+
+/* ─── quote block（深底 + 白字，兩個 mode 共用） ─── */
+.prose-article .article-quote {
+  background: linear-gradient(135deg, var(--callout-quote-bg-start), var(--callout-quote-bg-end));
+  color: var(--callout-quote-text);
+  padding: 24px 30px;
+  border-radius: 12px;
+  margin: 24px 0;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.7;
+  position: relative;
+}
+.prose-article .article-quote .qa {
+  display: block;
+  margin-top: 12px;
+  color: var(--callout-quote-meta);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ─── stat cards（深底 + 白字，兩個 mode 共用） ─── */
+.prose-article .article-stat-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.prose-article .article-stat {
+  background: linear-gradient(135deg, var(--callout-stat-bg-start), var(--callout-stat-bg-end));
+  color: var(--callout-stat-text);
+  padding: 16px 20px;
+  border-radius: 12px;
+  flex: 1;
+  min-width: 140px;
+}
+.prose-article .article-stat .num {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+.prose-article .article-stat .label {
+  color: var(--callout-stat-meta);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ─── article tables (article-table 是文章內用 class) ─── */
+.prose-article table.article-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.prose-article table.article-table th {
+  background: var(--callout-table-th-bg);
+  color: var(--callout-table-th-text);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid var(--callout-table-border);
+}
+.prose-article table.article-table td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--callout-table-border);
   color: var(--color-text);
-  border-left-color: #8b7dff;
 }
 
-.dark .prose-article .article-bad {
-  background: #3a1f1f;
-  color: #fecaca;
-  border-left-color: #f87171;
+/* ─── ff-list grid (Forcing Functions 卡片) ─── */
+.prose-article .ff-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
 }
-
-.dark .prose-article .article-good {
-  background: #1f3326;
-  color: #bbf7d0;
-  border-left-color: #4ade80;
+.prose-article .ff-item {
+  background: var(--callout-card-bg);
+  border: 1px solid var(--callout-card-border);
+  border-radius: 8px;
+  padding: 14px;
 }
-
-.dark .prose-article .article-warn {
-  background: #3a2f12;
-  color: #fde68a;
-  border-left-color: #fbbf24;
+.prose-article .ff-item .ff-title {
+  font-weight: 700;
+  color: var(--callout-info-border);   /* 用 info border 同色 → cohesion */
+  margin-bottom: 6px;
 }
-
-/* .article-quote 在 light mode 就是深藍配白字，dark mode 維持 */
-.dark .prose-article .article-quote {
-  background: linear-gradient(135deg, #1e293b, #2a3447);
-  border: 1px solid var(--color-border);
-}
-
-/* article-stat 已是深藍配白字，可用，但邊框 polish */
-.dark .prose-article .article-stat {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* 表格 header / cell：文章內嵌的淺灰 #f3f4f6 在 dark 下隱形 */
-.dark .prose-article table.article-table th {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border-bottom-color: var(--color-border);
-}
-
-.dark .prose-article table.article-table td {
-  border-top-color: var(--color-border);
-  color: var(--color-text);
-}
-
-/* Forcing Function grid 卡片：原 white 背景 */
-.dark .prose-article .ff-item {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-  color: var(--color-text);
-}
-
-.dark .prose-article .ff-item .ff-desc {
+.prose-article .ff-item .ff-desc {
+  font-size: 13px;
   color: var(--color-text-secondary);
-}
-
-.dark .prose-article .ff-item .ff-title {
-  color: var(--color-primary);
+  line-height: 1.6;
 }
