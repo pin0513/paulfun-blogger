@@ -15,10 +15,8 @@ interface Category {
 
 const navItems = [
   { href: "/", label: "首頁" },
-  { href: "https://world-news.paulfun.net", label: "全球戰情室 (beta)", external: true },
   { href: "https://zhoushen.paulfun.net", label: "周深 Moment", external: true },
-  { href: "https://bio.paulfun.net", label: "關於我", external: true },
-  { href: "https://learn.paulfun.net", label: "學習", external: true },
+  { href: "https://learn.paulfun.net", label: "Mido學習網", external: true },
   { href: "http://35.206.236.34:8089", label: "舊版 Blog", external: true },
 ];
 
