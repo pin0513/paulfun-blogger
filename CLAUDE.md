@@ -634,7 +634,29 @@ docker exec -i paulfun-postgres-dev pg_restore \
   - GCP 帳號: `pin0513@gmail.com`（需先 `gcloud config set account pin0513@gmail.com`）
   - GCP 專案: `paul-test-174403`
 
-### 部署方式（手動）
+### 部署方式（主要）：GitHub Actions 自動部署
+
+`.github/workflows/deploy.yml`（2026-07 上線，設計紀錄見 `docs/specs/2026-07-02-cicd-auto-deploy.md`）：
+
+- **觸發**：push 到 main 且 `frontend/**` 或 `backend-go/**` 有變更（自動判斷只部署變動的服務）；或 GitHub Actions 頁面手動 dispatch（可選 frontend / backend / both）
+- **認證**：Workload Identity Federation（keyless，不存任何 long-lived key）
+  - provider: `github-pool/providers/paulfun-provider`（鎖定本 repo）
+  - SA: `github-deployer@paul-test-174403.iam.gserviceaccount.com`
+  - repo variables: `WIF_PROVIDER` / `WIF_SERVICE_ACCOUNT`
+- **流程**：runner 上 build（原生 amd64）→ scp tar.gz 到 VM `/tmp` → `docker load` + `docker-compose up -d --no-deps --force-recreate <service>` → health check
+- **護欄**：`concurrency: deploy-prod` 單線部署（防 VM OOM）、load 前保留 `:rollback` tag、health check 失敗 job 標紅並印出回退指令
+
+#### Rollback runbook（實測過）
+
+```bash
+# frontend 回退到上一版（go-server 同理，換 image 名與 service 名）
+gcloud compute ssh paul-ubuntu --zone=asia-east1-a --project=paul-test-174403 --command="
+  sudo docker tag paulfun-frontend:rollback paulfun-frontend:prod &&
+  sudo docker-compose -f /home/paul_huang/paulfun-blogger/docker-compose.prod.yml up -d --no-deps --force-recreate frontend"
+# 復原到最新版：重跑 GitHub Actions dispatch 即可
+```
+
+### 部署方式（備援）：手動
 
 VM 上沒有 git repo，使用本機 build image → scp → load 方式部署：
 
