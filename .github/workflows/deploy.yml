@@ -1,7 +1,7 @@
 name: Deploy to GCP VM
 
-# Phase 1：只有手動觸發（workflow_dispatch）。
-# Phase 2 驗證通過後，解開下方 push trigger 註解啟用自動部署。
+# push 到 main 且 frontend/backend 有變更 → 自動部署變動的服務（Phase 2，2026-07-03 啟用）
+# 手動 dispatch 為備援 / 重部署用
 on:
   workflow_dispatch:
     inputs:
@@ -14,12 +14,12 @@ on:
           - frontend
           - backend
           - both
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - "frontend/**"
-  #     - "backend-go/**"
-  #     - ".github/workflows/deploy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "backend-go/**"
+      - ".github/workflows/deploy.yml"
 
 # VM 只有 1.7G RAM：同時間只允許一條部署 pipeline，避免同時 docker load 造成 OOM
 concurrency:
