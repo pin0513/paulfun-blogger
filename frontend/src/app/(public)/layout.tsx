@@ -13,6 +13,7 @@ interface Category {
   slug: string;
 }
 
+// 外部子站連結集中於此；新增/下架直接改這個陣列
 const navItems = [
   { href: "/", label: "首頁" },
   { href: "https://zhoushen.paulfun.net", label: "周深 Moment", external: true },
