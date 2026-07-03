@@ -1,0 +1,167 @@
+name: Deploy to GCP VM
+
+# Phase 1：只有手動觸發（workflow_dispatch）。
+# Phase 2 驗證通過後，解開下方 push trigger 註解啟用自動部署。
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "要部署的服務"
+        required: true
+        default: "frontend"
+        type: choice
+        options:
+          - frontend
+          - backend
+          - both
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "frontend/**"
+  #     - "backend-go/**"
+  #     - ".github/workflows/deploy.yml"
+
+# VM 只有 1.7G RAM：同時間只允許一條部署 pipeline，避免同時 docker load 造成 OOM
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # WIF OIDC 需要
+
+env:
+  GCP_PROJECT: paul-test-174403
+  GCP_ZONE: asia-east1-a
+  VM_NAME: paul-ubuntu
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.decide.outputs.frontend }}
+      backend: ${{ steps.decide.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: 判斷要部署哪些服務
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SVC="${{ inputs.service }}"
+            echo "frontend=$([ "$SVC" = "frontend" ] || [ "$SVC" = "both" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+            echo "backend=$([ "$SVC" = "backend" ] || [ "$SVC" = "both" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          else
+            # push 觸發：看變更路徑
+            CHANGED=$(git diff --name-only HEAD^ HEAD)
+            echo "$CHANGED"
+            echo "frontend=$(echo "$CHANGED" | grep -q '^frontend/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+            echo "backend=$(echo "$CHANGED" | grep -q '^backend-go/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-frontend:
+    needs: detect
+    if: needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: GCP 認證（WIF keyless）
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build image（runner 原生 amd64）
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_R2_URL=https://img.paulfun.net \
+            -t paulfun-frontend:prod ./frontend
+
+      - name: Save + scp 到 VM
+        run: |
+          docker save paulfun-frontend:prod | gzip > /tmp/frontend.tar.gz
+          ls -lh /tmp/frontend.tar.gz
+          gcloud compute scp /tmp/frontend.tar.gz "$VM_NAME":~/paulfun-blogger/ \
+            --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet
+
+      - name: VM 上 load + 重建容器（先留 rollback tag）
+        run: |
+          gcloud compute ssh "$VM_NAME" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet --command="
+            cd ~/paulfun-blogger &&
+            sudo docker tag paulfun-frontend:prod paulfun-frontend:rollback 2>/dev/null || true &&
+            sudo docker load < frontend.tar.gz &&
+            sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate frontend &&
+            sudo docker image prune -f
+          "
+
+      - name: Health check
+        run: |
+          sleep 15
+          for i in 1 2 3; do
+            if curl -sf -o /dev/null https://paulfun.net; then
+              echo "✅ frontend health check 通過"
+              exit 0
+            fi
+            echo "retry $i..."
+            sleep 10
+          done
+          echo "❌ health check 失敗。回退指令："
+          echo "gcloud compute ssh $VM_NAME --zone=$GCP_ZONE --project=$GCP_PROJECT --command=\"cd ~/paulfun-blogger && sudo docker tag paulfun-frontend:rollback paulfun-frontend:prod && sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate frontend\""
+          exit 1
+
+  deploy-backend:
+    needs: [detect, deploy-frontend]
+    # frontend 沒跑（skip）也要能執行 backend，但 frontend 失敗時不繼續
+    if: |
+      always() && needs.detect.outputs.backend == 'true' &&
+      needs.deploy-frontend.result != 'failure' && needs.deploy-frontend.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: GCP 認證（WIF keyless）
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build image（runner 原生 amd64）
+        run: docker build -t paulfun-go-server:prod ./backend-go
+
+      - name: Save + scp 到 VM
+        run: |
+          docker save paulfun-go-server:prod | gzip > /tmp/go-server.tar.gz
+          ls -lh /tmp/go-server.tar.gz
+          gcloud compute scp /tmp/go-server.tar.gz "$VM_NAME":~/paulfun-blogger/ \
+            --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet
+
+      - name: VM 上 load + 重建容器（先留 rollback tag）
+        run: |
+          gcloud compute ssh "$VM_NAME" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet --command="
+            cd ~/paulfun-blogger &&
+            sudo docker tag paulfun-go-server:prod paulfun-go-server:rollback 2>/dev/null || true &&
+            sudo docker load < go-server.tar.gz &&
+            sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate go-server &&
+            sudo docker image prune -f
+          "
+
+      - name: Health check
+        run: |
+          sleep 10
+          for i in 1 2 3; do
+            if curl -sf "https://paulfun.net/api/articles?pageSize=1" | grep -q '"success":true'; then
+              echo "✅ backend health check 通過"
+              exit 0
+            fi
+            echo "retry $i..."
+            sleep 10
+          done
+          echo "❌ health check 失敗。回退指令："
+          echo "gcloud compute ssh $VM_NAME --zone=$GCP_ZONE --project=$GCP_PROJECT --command=\"cd ~/paulfun-blogger && sudo docker tag paulfun-go-server:rollback paulfun-go-server:prod && sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate go-server\""
+          exit 1
