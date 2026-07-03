@@ -34,6 +34,8 @@ env:
   GCP_PROJECT: paul-test-174403
   GCP_ZONE: asia-east1-a
   VM_NAME: paul-ubuntu
+  # CI 以 runner 使用者登入 VM，無權寫 paul_huang 的 home → tar.gz 走 /tmp，compose 用絕對路徑
+  COMPOSE_FILE: /home/paul_huang/paulfun-blogger/docker-compose.prod.yml
 
 jobs:
   detect:
@@ -85,17 +87,17 @@ jobs:
         run: |
           docker save paulfun-frontend:prod | gzip > /tmp/frontend.tar.gz
           ls -lh /tmp/frontend.tar.gz
-          gcloud compute scp /tmp/frontend.tar.gz "$VM_NAME":~/paulfun-blogger/ \
+          gcloud compute scp /tmp/frontend.tar.gz "$VM_NAME":/tmp/frontend.tar.gz \
             --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet
 
       - name: VM 上 load + 重建容器（先留 rollback tag）
         run: |
           gcloud compute ssh "$VM_NAME" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet --command="
-            cd ~/paulfun-blogger &&
             sudo docker tag paulfun-frontend:prod paulfun-frontend:rollback 2>/dev/null || true &&
-            sudo docker load < frontend.tar.gz &&
-            sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate frontend &&
-            sudo docker image prune -f
+            sudo docker load < /tmp/frontend.tar.gz &&
+            sudo docker-compose -f $COMPOSE_FILE up -d --no-deps --force-recreate frontend &&
+            sudo docker image prune -f &&
+            rm -f /tmp/frontend.tar.gz
           "
 
       - name: Health check
@@ -138,17 +140,17 @@ jobs:
         run: |
           docker save paulfun-go-server:prod | gzip > /tmp/go-server.tar.gz
           ls -lh /tmp/go-server.tar.gz
-          gcloud compute scp /tmp/go-server.tar.gz "$VM_NAME":~/paulfun-blogger/ \
+          gcloud compute scp /tmp/go-server.tar.gz "$VM_NAME":/tmp/go-server.tar.gz \
             --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet
 
       - name: VM 上 load + 重建容器（先留 rollback tag）
         run: |
           gcloud compute ssh "$VM_NAME" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --quiet --command="
-            cd ~/paulfun-blogger &&
             sudo docker tag paulfun-go-server:prod paulfun-go-server:rollback 2>/dev/null || true &&
-            sudo docker load < go-server.tar.gz &&
-            sudo docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate go-server &&
-            sudo docker image prune -f
+            sudo docker load < /tmp/go-server.tar.gz &&
+            sudo docker-compose -f $COMPOSE_FILE up -d --no-deps --force-recreate go-server &&
+            sudo docker image prune -f &&
+            rm -f /tmp/go-server.tar.gz
           "
 
       - name: Health check
