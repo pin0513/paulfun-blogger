@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getArticleById } from "@/lib/api/articles";
 import { TableOfContents } from "@/components/article/TableOfContents";
 import { ReactionButtons } from "@/components/article/ReactionButtons";
+import { RelatedArticles } from "@/components/article/RelatedArticles";
 import { CommentList } from "@/components/comment/CommentList";
 import { FontSizeControl } from "@/components/article/FontSizeControl";
 import { MobileToc } from "@/components/article/MobileToc";
@@ -216,7 +217,10 @@ export default function ArticleContent() {
               </div>
             )}
 
-            {/* Reactions */}
+            {/* 系列 / 相關文章（知識串連） */}
+            <RelatedArticles articleId={article.id} />
+
+            {/* Reactions + 分享 */}
             <div
               className="mt-8 pt-6"
               style={{ borderTop: "1px solid var(--color-border)" }}
@@ -227,7 +231,10 @@ export default function ArticleContent() {
               >
                 覺得這篇文章如何？
               </p>
-              <ReactionButtons articleId={article.id} />
+              <ReactionButtons
+                articleId={article.id}
+                initialLikeCount={article.likeCount ?? 0}
+              />
             </div>
 
             {/* Comments */}

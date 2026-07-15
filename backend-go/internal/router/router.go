@@ -11,13 +11,14 @@ import (
 )
 
 type Handlers struct {
-	Auth     *handlers.AuthHandler
-	Article  *handlers.ArticleHandler
-	Admin    *handlers.AdminHandler
-	Media    *handlers.MediaHandler
-	Import   *handlers.ImportHandler
-	Category *handlers.CategoryHandler
-	SATAdmin *handlers.SATAdminHandler // service-account-token 管理
+	Auth        *handlers.AuthHandler
+	Article     *handlers.ArticleHandler
+	Admin       *handlers.AdminHandler
+	Media       *handlers.MediaHandler
+	Import      *handlers.ImportHandler
+	Category    *handlers.CategoryHandler
+	SATAdmin    *handlers.SATAdminHandler    // service-account-token 管理
+	ArticleLink *handlers.ArticleLinkHandler // 文章知識串連
 }
 
 func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
@@ -51,11 +52,15 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 	// ── 前台公開 API ──────────────────────────────────────
 	// 注意：固定路徑（categories, tags）必須在 /:id 之前（Gin 規則）
 	articles := api.Group("/articles")
+	likeLimiter := middleware.NewRateLimiter(60, 1*time.Minute) // 匿名按讚防濫用
 	{
 		articles.GET("", h.Article.ListArticles)
 		articles.GET("/categories", h.Article.ListCategories)
 		articles.GET("/tags", h.Article.ListTags)
 		articles.GET("/:id", h.Article.GetArticleByID)
+		articles.GET("/:id/related", h.ArticleLink.GetRelated) // 知識串連（series + related）
+		articles.POST("/:id/like", likeLimiter.Limit(), h.Article.LikeArticle)
+		articles.POST("/:id/unlike", likeLimiter.Limit(), h.Article.UnlikeArticle)
 	}
 
 	// ── 後台 API（需要認證 + admin 權限）──────────────────────
@@ -67,6 +72,7 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.POST("/auth/register", h.Auth.Register)
 		// Articles
 		admin.GET("/articles", h.Admin.ListArticles)
+		admin.GET("/articles/search", h.Admin.SearchArticles) // 多條件全文檢索（回顧用）
 		admin.GET("/articles/:id", h.Admin.GetArticle)
 		admin.POST("/articles", h.Admin.CreateArticle)
 		admin.PUT("/articles/:id", h.Admin.UpdateArticle)
@@ -74,6 +80,11 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.DELETE("/articles/:id", h.Admin.DeleteArticle)
 		admin.POST("/articles/:id/publish", h.Admin.PublishArticle)
 		admin.POST("/articles/:id/unpublish", h.Admin.UnpublishArticle)
+		// Article Links（知識串連管理）
+		admin.GET("/articles/:id/links", h.ArticleLink.GetLinks)
+		admin.POST("/articles/:id/links", h.ArticleLink.CreateLink)
+		admin.DELETE("/articles/:id/links/:linkId", h.ArticleLink.DeleteLink)
+
 		admin.GET("/articles/:id/archives", h.Admin.GetArticleArchives)
 		admin.GET("/articles/:id/archives/:archiveId", h.Admin.GetArticleArchiveDetail)
 		admin.POST("/articles/:id/restore/:archiveId", h.Admin.RestoreArticle)

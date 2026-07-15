@@ -35,6 +35,7 @@ type ArticleDto struct {
 	Status      string       `json:"status"`
 	PublishedAt *time.Time   `json:"publishedAt"`
 	ViewCount   int          `json:"viewCount"`
+	LikeCount   int          `json:"likeCount"`
 	Tags        []TagDto     `json:"tags"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	UpdatedAt   *time.Time   `json:"updatedAt"`
@@ -51,6 +52,7 @@ type ArticleListItemDto struct {
 	Status      string       `json:"status"`
 	PublishedAt *time.Time   `json:"publishedAt"`
 	ViewCount   int          `json:"viewCount"`
+	LikeCount   int          `json:"likeCount"`
 	Tags        []TagDto     `json:"tags"`
 	CreatedAt   time.Time    `json:"createdAt"`
 }

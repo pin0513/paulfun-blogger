@@ -297,3 +297,19 @@ func (h *AdminHandler) UnpublishArticle(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.Ok(article, "文章已取消發佈"))
 }
+
+// GET /api/admin/articles/search — 多條件全文檢索（回顧用，含草稿）。
+// 契約見 docs/specs/2026-07-15-article-review-search-links.md
+func (h *AdminHandler) SearchArticles(c *gin.Context) {
+	var p dto.ArticleSearchParams
+	if err := c.ShouldBindQuery(&p); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("查詢參數錯誤"))
+		return
+	}
+	resp, err := h.articleSvc.SearchArticles(p)
+	if err != nil {
+		handleErr(c, err, "檢索失敗")
+		return
+	}
+	c.JSON(http.StatusOK, dto.Ok(resp, ""))
+}

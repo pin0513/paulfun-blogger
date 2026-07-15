@@ -418,6 +418,10 @@ func (s *ArticleService) DeleteArticle(id uint, userID uint) error {
 		if err := tx.Where("article_id = ?", id).Delete(&models.ArticleArchive{}).Error; err != nil {
 			return err
 		}
+		// (2a) 清知識串連（雙向），防 FK violation
+		if err := tx.Where("from_article_id = ? OR to_article_id = ?", id, id).Delete(&models.ArticleLink{}).Error; err != nil {
+			return err
+		}
 		// (3) 刪 article 本身
 		return tx.Delete(&article).Error
 	})
@@ -611,6 +615,7 @@ func mapToDto(a models.Article) dto.ArticleDto {
 		Status:      a.Status,
 		PublishedAt: a.PublishedAt,
 		ViewCount:   a.ViewCount,
+		LikeCount:   a.LikeCount,
 		Tags:        tags,
 		CreatedAt:   a.CreatedAt,
 		UpdatedAt:   a.UpdatedAt,
@@ -645,6 +650,7 @@ func mapToListItemDto(a models.Article) dto.ArticleListItemDto {
 		Status:      a.Status,
 		PublishedAt: a.PublishedAt,
 		ViewCount:   a.ViewCount,
+		LikeCount:   a.LikeCount,
 		Tags:        tags,
 		CreatedAt:   a.CreatedAt,
 	}

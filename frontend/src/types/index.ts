@@ -43,6 +43,7 @@ export interface Article {
   status: ArticleStatus;
   publishedAt?: string;
   viewCount: number;
+  likeCount: number;
   version: number;
   tags: Tag[];
   createdAt: string;
@@ -60,7 +61,23 @@ export interface ArticleListItem {
   status: ArticleStatus;
   publishedAt?: string;
   viewCount: number;
+  likeCount: number;
   tags: Tag[];
+}
+
+// Article knowledge links（知識串連）
+export interface SeriesItem {
+  id: number;
+  title: string;
+  slug: string;
+  publishedAt?: string;
+  note?: string;
+  isCurrent?: boolean;
+}
+
+export interface RelatedArticles {
+  series: SeriesItem[];
+  related: SeriesItem[];
 }
 
 // Comment types

@@ -4,6 +4,7 @@ import type {
   PagedResponse,
   Article,
   ArticleListItem,
+  RelatedArticles,
 } from "@/types";
 
 export interface ArticleQueryParams {
@@ -70,6 +71,30 @@ export async function getArticleById(
   id: number | string
 ): Promise<ApiResponse<Article>> {
   return apiClient.get<ApiResponse<Article>>(`/api/articles/${id}`);
+}
+
+export async function getRelatedArticles(
+  id: number | string
+): Promise<ApiResponse<RelatedArticles>> {
+  return apiClient.get<ApiResponse<RelatedArticles>>(
+    `/api/articles/${id}/related`
+  );
+}
+
+export async function likeArticle(
+  id: number
+): Promise<ApiResponse<{ likeCount: number }>> {
+  return apiClient.post<ApiResponse<{ likeCount: number }>>(
+    `/api/articles/${id}/like`
+  );
+}
+
+export async function unlikeArticle(
+  id: number
+): Promise<ApiResponse<{ likeCount: number }>> {
+  return apiClient.post<ApiResponse<{ likeCount: number }>>(
+    `/api/articles/${id}/unlike`
+  );
 }
 
 // Admin APIs

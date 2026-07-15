@@ -45,6 +45,7 @@ func main() {
 	importSvc := services.NewImportService(database)
 	categorySvc := services.NewCategoryService(database)
 	satSvc := services.NewSATService(database)
+	linkSvc := services.NewArticleLinkService(database)
 
 	// 5a. 確保「未分類」固定分類存在
 	// DELETE 任何分類時，文章會被 reassign 到此處；本身不可刪。
@@ -54,13 +55,14 @@ func main() {
 
 	// 6. 初始化 Handlers
 	h := router.Handlers{
-		Auth:     handlers.NewAuthHandler(authSvc, satSvc),
-		Article:  handlers.NewArticleHandler(articleSvc),
-		Admin:    handlers.NewAdminHandler(articleSvc),
-		Media:    handlers.NewMediaHandler(mediaSvc),
-		Import:   handlers.NewImportHandler(importSvc),
-		Category: handlers.NewCategoryHandler(categorySvc),
-		SATAdmin: handlers.NewSATAdminHandler(satSvc),
+		Auth:        handlers.NewAuthHandler(authSvc, satSvc),
+		Article:     handlers.NewArticleHandler(articleSvc),
+		Admin:       handlers.NewAdminHandler(articleSvc),
+		Media:       handlers.NewMediaHandler(mediaSvc),
+		Import:      handlers.NewImportHandler(importSvc),
+		Category:    handlers.NewCategoryHandler(categorySvc),
+		SATAdmin:    handlers.NewSATAdminHandler(satSvc),
+		ArticleLink: handlers.NewArticleLinkHandler(linkSvc),
 	}
 
 	// 7. 設定路由

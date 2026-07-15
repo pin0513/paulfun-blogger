@@ -507,6 +507,35 @@ curl -X POST https://paulfun.net/api/admin/import/articles \
   }'
 ```
 
+### 9. 回顧檢索 + 知識串連 + 按讚 API（2026-07-15）
+
+完整契約見 `docs/specs/2026-07-15-article-review-search-links.md`。
+
+#### GET `/api/admin/articles/search` — 多條件全文檢索（需 Bearer token，含草稿）
+
+寫新文章前回顧既有文章用。`q` 多關鍵字空白分隔。
+
+| 參數 | 說明 |
+|------|------|
+| `q`（必填） | 多關鍵字空白分隔；`mode=and`（預設）/`or` |
+| `fields` | `title,summary,content` 限定檢索欄位 |
+| `status` / `categoryIds` / `tagIds` | 過濾（csv 支援多值） |
+| `dateField` + `dateFrom`/`dateTo` | `created`/`published` + `YYYY-MM-DD` |
+
+回傳項目比一般列表多 `snippet`（命中前後文，命中詞以【】標記）與 `matchedFields`。
+
+#### 知識串連（避免重發既有知識、支援演進三部曲）
+
+- `POST /api/admin/articles/:id/links` — body `{toArticleId, relation, note}`；relation = `related`（相關）/ `series`（演進，方向「新承接舊」，:id 為較新那篇）
+- `GET /api/admin/articles/:id/links`、`DELETE /api/admin/articles/:id/links/:linkId`
+- `GET /api/articles/:id/related`（公開）— 回 `{series:[...], related:[...]}`，series 為完整鏈（舊→新、`isCurrent` 標記本篇），僅含已發佈
+- 防護：self-link / series 成環 → 400、重複 → 409；文章頁底部自動顯示「📖 系列文章 / 🔗 相關文章」
+
+#### 按讚（公開、匿名）
+
+- `POST /api/articles/:id/like` / `POST /api/articles/:id/unlike` — 回 `{likeCount}`；rate limit 60 次/分鐘；前端 localStorage 防重複
+- 文章 DTO 均含 `likeCount`
+
 ### 圖片 CDN
 
 所有圖片透過 Cloudflare R2 CDN 提供：

@@ -14,6 +14,7 @@ type Article struct {
 	Status     string     `gorm:"not null;default:'draft';size:20" json:"status"`
 	PublishedAt *time.Time `json:"publishedAt"`
 	ViewCount  int        `gorm:"default:0" json:"viewCount"`
+	LikeCount  int        `gorm:"default:0" json:"likeCount"`
 	Version    int        `gorm:"default:1" json:"version"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  *time.Time `json:"updatedAt"`

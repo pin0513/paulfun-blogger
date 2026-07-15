@@ -73,3 +73,33 @@ func (h *ArticleHandler) GetArticleByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.Ok(article, ""))
 }
+
+// POST /api/articles/:id/like（公開，匿名按讚；rate limit 於 router 層）
+func (h *ArticleHandler) LikeArticle(c *gin.Context) {
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("無效的文章 ID"))
+		return
+	}
+	count, err := h.svc.LikeArticle(id)
+	if err != nil {
+		handleErr(c, err, "按讚失敗")
+		return
+	}
+	c.JSON(http.StatusOK, dto.Ok(gin.H{"likeCount": count}, ""))
+}
+
+// POST /api/articles/:id/unlike（公開，收回讚）
+func (h *ArticleHandler) UnlikeArticle(c *gin.Context) {
+	id, err := parseUintParam(c, "id")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Fail[any]("無效的文章 ID"))
+		return
+	}
+	count, err := h.svc.UnlikeArticle(id)
+	if err != nil {
+		handleErr(c, err, "收回讚失敗")
+		return
+	}
+	c.JSON(http.StatusOK, dto.Ok(gin.H{"likeCount": count}, ""))
+}
