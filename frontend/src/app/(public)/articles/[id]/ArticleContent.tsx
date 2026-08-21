@@ -138,7 +138,7 @@ export default function ArticleContent() {
         </div>
 
         {/* Meta */}
-        <div className="flex items-center gap-4 text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style={{ color: "var(--color-text-muted)" }}>
           <div className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono"
@@ -153,14 +153,14 @@ export default function ArticleContent() {
             <span>{article.author.displayName}</span>
           </div>
           <span style={{ color: "var(--color-border)" }}>|</span>
-          <span className="font-mono text-xs">
+          <span className="font-mono text-xs whitespace-nowrap">
             <time dateTime={article.publishedAt}>{publishedLabel}</time>
           </span>
           {updatedLabel && (
             <>
               <span style={{ color: "var(--color-border)" }}>|</span>
               <span
-                className="font-mono text-xs"
+                className="font-mono text-xs whitespace-nowrap"
                 title={`內容最後修改於 ${updatedLabel}`}
               >
                 最後更新{" "}
@@ -169,7 +169,7 @@ export default function ArticleContent() {
             </>
           )}
           <span style={{ color: "var(--color-border)" }}>|</span>
-          <span className="font-mono text-xs">{article.viewCount} views</span>
+          <span className="font-mono text-xs whitespace-nowrap">{article.viewCount} views</span>
         </div>
       </div>
 
