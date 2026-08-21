@@ -36,9 +36,11 @@ type ArticleDto struct {
 	PublishedAt *time.Time   `json:"publishedAt"`
 	ViewCount   int          `json:"viewCount"`
 	LikeCount   int          `json:"likeCount"`
-	Tags        []TagDto     `json:"tags"`
-	CreatedAt   time.Time    `json:"createdAt"`
-	UpdatedAt   *time.Time   `json:"updatedAt"`
+	// Version 每次 Update / Patch / Restore 遞增，供前台標示修訂次數。
+	Version   int        `json:"version"`
+	Tags      []TagDto   `json:"tags"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt"`
 }
 
 type ArticleListItemDto struct {
@@ -132,9 +134,9 @@ type PublishArticleRequest struct {
 // ── Query ─────────────────────────────────────────────────────
 
 type ArticleQueryParams struct {
-	Page       int    `form:"page"`
-	PageSize   int    `form:"pageSize"`
-	SortBy     string `form:"sortBy"`
+	Page     int    `form:"page"`
+	PageSize int    `form:"pageSize"`
+	SortBy   string `form:"sortBy"`
 	// Descending 用 *bool 才能區分「沒傳」(nil) 與「明確傳 false」。
 	// 沒傳時透過 GetDescending() 預設 true（符合 CLAUDE.md 文件）。
 	Descending *bool  `form:"descending"`

@@ -616,6 +616,7 @@ func mapToDto(a models.Article) dto.ArticleDto {
 		PublishedAt: a.PublishedAt,
 		ViewCount:   a.ViewCount,
 		LikeCount:   a.LikeCount,
+		Version:     a.Version,
 		Tags:        tags,
 		CreatedAt:   a.CreatedAt,
 		UpdatedAt:   a.UpdatedAt,

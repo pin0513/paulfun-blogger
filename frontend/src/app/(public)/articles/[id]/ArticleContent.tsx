@@ -161,10 +161,13 @@ export default function ArticleContent() {
               <span style={{ color: "var(--color-border)" }}>|</span>
               <span
                 className="font-mono text-xs whitespace-nowrap"
-                title={`內容最後修改於 ${updatedLabel}`}
+                title={`內容最後修改於 ${updatedLabel}（第 ${article.version} 版）`}
               >
                 最後更新{" "}
                 <time dateTime={article.updatedAt}>{updatedLabel}</time>
+                {article.version > 1 && (
+                  <span style={{ opacity: 0.65 }}> · v{article.version}</span>
+                )}
               </span>
             </>
           )}
