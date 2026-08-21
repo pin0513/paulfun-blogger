@@ -80,6 +80,20 @@ export default function ArticleContent() {
     );
   }
 
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("zh-TW", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  const publishedLabel = article.publishedAt ? fmtDate(article.publishedAt) : "";
+  // 比對「當地日期字串」而非 UTC timestamp：發佈當下的微調（同一天）不算更新，
+  // 只有跨日的實質修改才顯示，避免每次小改都在讀者眼前標成新版本。
+  const updatedLabel =
+    article.updatedAt && publishedLabel && fmtDate(article.updatedAt) !== publishedLabel
+      ? fmtDate(article.updatedAt)
+      : null;
+
   return (
     <>
       {/* Article Header */}
@@ -140,14 +154,20 @@ export default function ArticleContent() {
           </div>
           <span style={{ color: "var(--color-border)" }}>|</span>
           <span className="font-mono text-xs">
-            {article.publishedAt
-              ? new Date(article.publishedAt).toLocaleDateString("zh-TW", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })
-              : ""}
+            <time dateTime={article.publishedAt}>{publishedLabel}</time>
           </span>
+          {updatedLabel && (
+            <>
+              <span style={{ color: "var(--color-border)" }}>|</span>
+              <span
+                className="font-mono text-xs"
+                title={`內容最後修改於 ${updatedLabel}`}
+              >
+                最後更新{" "}
+                <time dateTime={article.updatedAt}>{updatedLabel}</time>
+              </span>
+            </>
+          )}
           <span style={{ color: "var(--color-border)" }}>|</span>
           <span className="font-mono text-xs">{article.viewCount} views</span>
         </div>
