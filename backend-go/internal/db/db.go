@@ -28,6 +28,7 @@ func Init(cfg *config.Config) *gorm.DB {
 		&models.Media{},
 		&models.ServiceAccountToken{},
 		&models.ArticleLink{},
+		&models.JournalEntry{},
 	); err != nil {
 		log.Fatalf("AutoMigrate 失敗: %v", err)
 	}

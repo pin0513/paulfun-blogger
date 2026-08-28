@@ -46,6 +46,7 @@ func main() {
 	categorySvc := services.NewCategoryService(database)
 	satSvc := services.NewSATService(database)
 	linkSvc := services.NewArticleLinkService(database)
+	journalSvc := services.NewJournalService(database)
 
 	// 5a. 確保「未分類」固定分類存在
 	// DELETE 任何分類時，文章會被 reassign 到此處；本身不可刪。
@@ -63,6 +64,7 @@ func main() {
 		Category:    handlers.NewCategoryHandler(categorySvc),
 		SATAdmin:    handlers.NewSATAdminHandler(satSvc),
 		ArticleLink: handlers.NewArticleLinkHandler(linkSvc),
+		Journal:     handlers.NewJournalHandler(journalSvc),
 	}
 
 	// 7. 設定路由

@@ -80,6 +80,51 @@ export interface RelatedArticles {
   related: SeriesItem[];
 }
 
+// 自我覺察日記（薩提爾冰山）— 私人，僅本人可見
+export type CopingStance =
+  | "placating"        // 討好
+  | "blaming"          // 指責
+  | "superReasonable"  // 超理智
+  | "irrelevant"       // 打岔
+  | "congruent";       // 一致
+
+export interface JournalEntry {
+  id: number;
+  occurredAt: string;
+  title: string;
+  behavior?: string | null;
+  coping?: CopingStance | null;
+  feeling?: string | null;
+  feelingAbout?: string | null;
+  viewpoint?: string | null;
+  expectation?: string | null;
+  yearning?: string | null;
+  self?: string | null;
+  insight?: string | null;
+  nextAction?: string | null;
+  mood?: number | null;
+  tags?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface JournalEntryListItem {
+  id: number;
+  occurredAt: string;
+  title: string;
+  coping?: CopingStance | null;
+  mood?: number | null;
+  tags?: string | null;
+  excerpt: string;
+  depthFilled: number;
+}
+
+export interface JournalStats {
+  total: number;
+  last30Days: number;
+  byCoping: Record<string, number>;
+}
+
 // Comment types
 export type CommentStatus = "pending" | "approved" | "rejected";
 

@@ -19,6 +19,7 @@ type Handlers struct {
 	Category    *handlers.CategoryHandler
 	SATAdmin    *handlers.SATAdminHandler    // service-account-token 管理
 	ArticleLink *handlers.ArticleLinkHandler // 文章知識串連
+	Journal     *handlers.JournalHandler     // 自我覺察日記（私人）
 }
 
 func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
@@ -88,6 +89,15 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		admin.GET("/articles/:id/archives", h.Admin.GetArticleArchives)
 		admin.GET("/articles/:id/archives/:archiveId", h.Admin.GetArticleArchiveDetail)
 		admin.POST("/articles/:id/restore/:archiveId", h.Admin.RestoreArticle)
+
+		// 自我覺察日記（私人；SAT token 在 handler 入口被擋）
+		// 注意：固定路徑 stats 必須在 /:id 之前（Gin 規則）
+		admin.GET("/journal", h.Journal.List)
+		admin.GET("/journal/stats", h.Journal.Stats)
+		admin.GET("/journal/:id", h.Journal.Get)
+		admin.POST("/journal", h.Journal.Create)
+		admin.PUT("/journal/:id", h.Journal.Update)
+		admin.DELETE("/journal/:id", h.Journal.Delete)
 
 		// Media
 		admin.GET("/media", h.Media.ListMedia)
