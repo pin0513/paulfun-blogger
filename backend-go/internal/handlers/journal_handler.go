@@ -47,23 +47,23 @@ func (h *JournalHandler) owner(c *gin.Context) (uint, bool) {
 	return uid, true
 }
 
-// GET /api/admin/journal
-func (h *JournalHandler) List(c *gin.Context) {
+// GET /api/admin/journal?from=&to=  月曆用，只回填寫概況不回內容
+func (h *JournalHandler) Range(c *gin.Context) {
 	uid, ok := h.owner(c)
 	if !ok {
 		return
 	}
-	var q dto.JournalQueryParams
+	var q dto.JournalRangeParams
 	if err := c.ShouldBindQuery(&q); err != nil {
 		c.JSON(http.StatusBadRequest, dto.Fail[any]("查詢參數錯誤"))
 		return
 	}
-	resp, err := h.svc.List(uid, q)
+	days, err := h.svc.GetRange(uid, q.From, q.To)
 	if err != nil {
 		handleErr(c, err, "查詢失敗")
 		return
 	}
-	c.JSON(http.StatusOK, dto.Ok(resp, ""))
+	c.JSON(http.StatusOK, dto.Ok(days, ""))
 }
 
 // GET /api/admin/journal/stats
@@ -72,26 +72,50 @@ func (h *JournalHandler) Stats(c *gin.Context) {
 	if !ok {
 		return
 	}
-	s, err := h.svc.Stats(uid)
+	st, err := h.svc.Stats(uid)
 	if err != nil {
 		handleErr(c, err, "查詢失敗")
 		return
 	}
-	c.JSON(http.StatusOK, dto.Ok(s, ""))
+	c.JSON(http.StatusOK, dto.Ok(st, ""))
 }
 
-// GET /api/admin/journal/:id
-func (h *JournalHandler) Get(c *gin.Context) {
+// GET /api/admin/journal/favorites  各欄位最近用過的選項
+func (h *JournalHandler) Favorites(c *gin.Context) {
 	uid, ok := h.owner(c)
 	if !ok {
 		return
 	}
-	id, err := parseUintParam(c, "id")
+	f, err := h.svc.Favorites(uid)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
+		handleErr(c, err, "查詢失敗")
 		return
 	}
-	e, err := h.svc.Get(uid, id)
+	c.JSON(http.StatusOK, dto.Ok(f, ""))
+}
+
+// GET /api/admin/journal/export  匯出 Markdown
+func (h *JournalHandler) Export(c *gin.Context) {
+	uid, ok := h.owner(c)
+	if !ok {
+		return
+	}
+	md, err := h.svc.ExportMarkdown(uid)
+	if err != nil {
+		handleErr(c, err, "匯出失敗")
+		return
+	}
+	c.Header("Content-Disposition", `attachment; filename="journal.md"`)
+	c.Data(http.StatusOK, "text/markdown; charset=utf-8", []byte(md))
+}
+
+// GET /api/admin/journal/:date  沒寫過回空白，不是 404
+func (h *JournalHandler) GetDay(c *gin.Context) {
+	uid, ok := h.owner(c)
+	if !ok {
+		return
+	}
+	e, err := h.svc.GetDay(uid, c.Param("date"))
 	if err != nil {
 		handleErr(c, err, "查詢失敗")
 		return
@@ -99,8 +123,8 @@ func (h *JournalHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.Ok(e, ""))
 }
 
-// POST /api/admin/journal
-func (h *JournalHandler) Create(c *gin.Context) {
+// PUT /api/admin/journal/:date  一天一篇的 upsert
+func (h *JournalHandler) UpsertDay(c *gin.Context) {
 	uid, ok := h.owner(c)
 	if !ok {
 		return
@@ -110,50 +134,21 @@ func (h *JournalHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.Fail[any]("請求格式錯誤"))
 		return
 	}
-	e, err := h.svc.Create(uid, &req)
+	e, err := h.svc.UpsertDay(uid, c.Param("date"), &req)
 	if err != nil {
-		handleErr(c, err, "建立失敗")
+		handleErr(c, err, "儲存失敗")
 		return
 	}
-	c.JSON(http.StatusCreated, dto.Ok(e, "已記錄"))
+	c.JSON(http.StatusOK, dto.Ok(e, "已儲存"))
 }
 
-// PUT /api/admin/journal/:id
-func (h *JournalHandler) Update(c *gin.Context) {
+// DELETE /api/admin/journal/:date
+func (h *JournalHandler) DeleteDay(c *gin.Context) {
 	uid, ok := h.owner(c)
 	if !ok {
 		return
 	}
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
-		return
-	}
-	var req dto.UpsertJournalEntryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.Fail[any]("請求格式錯誤"))
-		return
-	}
-	e, err := h.svc.Update(uid, id, &req)
-	if err != nil {
-		handleErr(c, err, "更新失敗")
-		return
-	}
-	c.JSON(http.StatusOK, dto.Ok(e, "已更新"))
-}
-
-// DELETE /api/admin/journal/:id
-func (h *JournalHandler) Delete(c *gin.Context) {
-	uid, ok := h.owner(c)
-	if !ok {
-		return
-	}
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.Fail[any]("ID 格式錯誤"))
-		return
-	}
-	if err := h.svc.Delete(uid, id); err != nil {
+	if err := h.svc.DeleteDay(uid, c.Param("date")); err != nil {
 		handleErr(c, err, "刪除失敗")
 		return
 	}

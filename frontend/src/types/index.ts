@@ -80,49 +80,37 @@ export interface RelatedArticles {
   related: SeriesItem[];
 }
 
-// 自我覺察日記（薩提爾冰山）— 私人，僅本人可見
-export type CopingStance =
-  | "placating"        // 討好
-  | "blaming"          // 指責
-  | "superReasonable"  // 超理智
-  | "irrelevant"       // 打岔
-  | "congruent";       // 一致
-
+// 自我覺察日記（薩提爾冰山）— 私人，僅本人可見。一天一篇，各層為選項陣列。
 export interface JournalEntry {
-  id: number;
-  occurredAt: string;
-  title: string;
-  behavior?: string | null;
-  coping?: CopingStance | null;
-  feeling?: string | null;
-  feelingAbout?: string | null;
-  viewpoint?: string | null;
-  expectation?: string | null;
-  yearning?: string | null;
-  self?: string | null;
-  insight?: string | null;
-  nextAction?: string | null;
-  mood?: number | null;
-  tags?: string | null;
-  createdAt: string;
+  entryDate: string;          // YYYY-MM-DD
+  behavior: string[];
+  feeling: string[];
+  meta: string[];
+  view: string[];
+  expectSelf: string[];
+  expectOther: string[];
+  expectFrom: string[];
+  values: string[];
+  note: string;
+  createdAt?: string;
   updatedAt?: string;
 }
 
-export interface JournalEntryListItem {
-  id: number;
-  occurredAt: string;
-  title: string;
-  coping?: CopingStance | null;
-  mood?: number | null;
-  tags?: string | null;
-  excerpt: string;
+export interface JournalDay {
+  entryDate: string;
   depthFilled: number;
+  itemCount: number;
+  hasNote: boolean;
+  preview: string[];
 }
 
+export interface ValueTally { value: string; count: number }
+
 export interface JournalStats {
-  total: number;
+  totalDays: number;
   last30Days: number;
-  byCoping: Record<string, number>;
+  currentStreak: number;
+  topByField: Record<string, ValueTally[]>;
 }
 
 // Comment types

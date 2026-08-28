@@ -92,12 +92,13 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 
 		// 自我覺察日記（私人；SAT token 在 handler 入口被擋）
 		// 注意：固定路徑 stats 必須在 /:id 之前（Gin 規則）
-		admin.GET("/journal", h.Journal.List)
+		admin.GET("/journal", h.Journal.Range)
 		admin.GET("/journal/stats", h.Journal.Stats)
-		admin.GET("/journal/:id", h.Journal.Get)
-		admin.POST("/journal", h.Journal.Create)
-		admin.PUT("/journal/:id", h.Journal.Update)
-		admin.DELETE("/journal/:id", h.Journal.Delete)
+		admin.GET("/journal/favorites", h.Journal.Favorites)
+		admin.GET("/journal/export", h.Journal.Export)
+		admin.GET("/journal/:date", h.Journal.GetDay)
+		admin.PUT("/journal/:date", h.Journal.UpsertDay)
+		admin.DELETE("/journal/:date", h.Journal.DeleteDay)
 
 		// Media
 		admin.GET("/media", h.Media.ListMedia)
