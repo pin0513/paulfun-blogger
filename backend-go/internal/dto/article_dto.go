@@ -57,6 +57,10 @@ type ArticleListItemDto struct {
 	LikeCount   int          `json:"likeCount"`
 	Tags        []TagDto     `json:"tags"`
 	CreatedAt   time.Time    `json:"createdAt"`
+	// ReadingMinutes 由 content 即時估算。刻意不存成資料庫欄位 ——
+	// 那會製造第二份需要跟 content 同步的真相。列表查詢本來就已經把
+	// 整份 HTML 撈進記憶體了（見 TK-01），這裡只是多用它一次。
+	ReadingMinutes int `json:"readingMinutes"`
 }
 
 // ── Request ───────────────────────────────────────────────────

@@ -63,6 +63,8 @@ export interface ArticleListItem {
   viewCount: number;
   likeCount: number;
   tags: Tag[];
+  /** 由後端從 content 即時估算（中文 350 字/分、英文 220 詞/分），最少 1。 */
+  readingMinutes?: number;
 }
 
 // Article knowledge links（知識串連）

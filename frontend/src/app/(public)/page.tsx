@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getArticles } from "@/lib/api/articles";
 import { getStaticImageUrl } from "@/lib/api/media";
 import type { ArticleListItem } from "@/types";
+import { AiMarkdownButton } from "@/components/article/AiMarkdownButton";
 
 export default function HomePage() {
   const [articles, setArticles] = useState<ArticleListItem[]>([]);
@@ -354,10 +355,21 @@ function ArticleCard({ article }: { article: ArticleListItem }) {
             </p>
           )}
 
-          {/* 底部 author / views — 報紙署名感 */}
+          {/* 底部 author / 閱讀時間 / views — 報紙署名感 */}
           <div className="mt-4 pt-3 flex items-center justify-between text-[var(--color-meta)] border-t border-[var(--color-border)]">
             <span className="label-spaced">By {article.author.displayName}</span>
-            <span className="text-xs">{article.viewCount} views</span>
+            <span className="flex items-center gap-2 text-xs">
+              {article.readingMinutes ? (
+                <span>{article.readingMinutes} 分鐘</span>
+              ) : null}
+              <span>{article.viewCount} views</span>
+            </span>
+          </div>
+
+          {/* AI 可讀格式 —— 放在卡片最底，不跟標題與摘要搶注意力。
+              整張卡片被 <Link> 包住，按鈕內部有 stopPropagation。 */}
+          <div className="mt-2 flex justify-end">
+            <AiMarkdownButton articleId={article.id} />
           </div>
         </div>
       </article>

@@ -58,6 +58,7 @@ func main() {
 	h := router.Handlers{
 		Auth:        handlers.NewAuthHandler(authSvc, satSvc),
 		Article:     handlers.NewArticleHandler(articleSvc),
+		Markdown:    handlers.NewMarkdownHandler(articleSvc, cfg.SiteURL),
 		Admin:       handlers.NewAdminHandler(articleSvc),
 		Media:       handlers.NewMediaHandler(mediaSvc),
 		Import:      handlers.NewImportHandler(importSvc),

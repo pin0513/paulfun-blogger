@@ -19,17 +19,21 @@ type Config struct {
 	JWTSecret      string
 	JWTExpireHours int
 
-	Port      string
-	BaseURL   string
+	Port    string
+	BaseURL string
+	// SiteURL 是對外的公開站台網址，用於 canonical、Markdown 匯出等「給外部看」的連結。
+	// 不共用 BaseURL —— 那個在 production 是 http://paulfun.net 且用途是本機檔案儲存網址，
+	// 拿來當 canonical 會給出錯的協定。
+	SiteURL   string
 	UploadDir string
 
 	// Storage 設定
-	StorageType      string // "local" | "r2"
-	R2AccountID      string
-	R2AccessKeyID    string
+	StorageType       string // "local" | "r2"
+	R2AccountID       string
+	R2AccessKeyID     string
 	R2SecretAccessKey string
-	R2Bucket         string
-	R2PublicURL      string
+	R2Bucket          string
+	R2PublicURL       string
 }
 
 func Load() *Config {
@@ -51,14 +55,15 @@ func Load() *Config {
 
 		Port:      getEnv("PORT", "8080"),
 		BaseURL:   getEnv("BASE_URL", "http://localhost:5266"),
+		SiteURL:   getEnv("SITE_URL", "https://paulfun.net"),
 		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),
 
-		StorageType:      getEnv("STORAGE_TYPE", "local"),
-		R2AccountID:      getEnv("R2_ACCOUNT_ID", ""),
-		R2AccessKeyID:    getEnv("R2_ACCESS_KEY_ID", ""),
+		StorageType:       getEnv("STORAGE_TYPE", "local"),
+		R2AccountID:       getEnv("R2_ACCOUNT_ID", ""),
+		R2AccessKeyID:     getEnv("R2_ACCESS_KEY_ID", ""),
 		R2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
-		R2Bucket:         getEnv("R2_BUCKET", "paulfun-images"),
-		R2PublicURL:      getEnv("R2_PUBLIC_URL", ""),
+		R2Bucket:          getEnv("R2_BUCKET", "paulfun-images"),
+		R2PublicURL:       getEnv("R2_PUBLIC_URL", ""),
 	}
 }
 

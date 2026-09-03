@@ -10,6 +10,7 @@ import (
 
 	"github.com/paulhuang/paulfun-blogger/internal/apierror"
 	"github.com/paulhuang/paulfun-blogger/internal/dto"
+	"github.com/paulhuang/paulfun-blogger/internal/markdown"
 	"github.com/paulhuang/paulfun-blogger/internal/models"
 	"gorm.io/gorm"
 )
@@ -641,18 +642,28 @@ func mapToListItemDto(a models.Article) dto.ArticleListItemDto {
 	}
 
 	return dto.ArticleListItemDto{
-		ID:          a.ID,
-		Title:       a.Title,
-		Slug:        a.Slug,
-		Summary:     a.Summary,
-		CoverImage:  a.CoverImage,
-		Category:    cat,
-		Author:      mapToUserDto(&a.Author),
-		Status:      a.Status,
-		PublishedAt: a.PublishedAt,
-		ViewCount:   a.ViewCount,
-		LikeCount:   a.LikeCount,
-		Tags:        tags,
-		CreatedAt:   a.CreatedAt,
+		ID:             a.ID,
+		Title:          a.Title,
+		Slug:           a.Slug,
+		Summary:        a.Summary,
+		CoverImage:     a.CoverImage,
+		Category:       cat,
+		Author:         mapToUserDto(&a.Author),
+		Status:         a.Status,
+		PublishedAt:    a.PublishedAt,
+		ViewCount:      a.ViewCount,
+		LikeCount:      a.LikeCount,
+		Tags:           tags,
+		CreatedAt:      a.CreatedAt,
+		ReadingMinutes: readingMinutesOf(a.Content),
 	}
+}
+
+// readingMinutesOf 即時估算閱讀時間。content 已經在記憶體裡（列表查詢沒有
+// Select 投影，撈的是整列），所以這裡不會多打一次資料庫。
+func readingMinutesOf(content *string) int {
+	if content == nil {
+		return 1
+	}
+	return markdown.ReadingMinutes(*content)
 }

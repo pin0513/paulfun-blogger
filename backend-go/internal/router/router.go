@@ -20,6 +20,7 @@ type Handlers struct {
 	SATAdmin    *handlers.SATAdminHandler    // service-account-token 管理
 	ArticleLink *handlers.ArticleLinkHandler // 文章知識串連
 	Journal     *handlers.JournalHandler     // 自我覺察日記（私人）
+	Markdown    *handlers.MarkdownHandler    // 文章的 AI 可讀 Markdown 版本
 }
 
 func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
@@ -60,6 +61,9 @@ func Setup(cfg *config.Config, h Handlers, uploadDir string) *gin.Engine {
 		articles.GET("/tags", h.Article.ListTags)
 		articles.GET("/:id", h.Article.GetArticleByID)
 		articles.GET("/:id/related", h.ArticleLink.GetRelated) // 知識串連（series + related）
+		// 純文字 Markdown 版本，給 AI agent 直接 fetch 全文用。
+		// 回 text/markdown 而非 JSON —— 包一層 JSON 會讓對方還要先解析再挖內容。
+		articles.GET("/:id/markdown", h.Markdown.GetArticleMarkdown)
 		articles.POST("/:id/like", likeLimiter.Limit(), h.Article.LikeArticle)
 		articles.POST("/:id/unlike", likeLimiter.Limit(), h.Article.UnlikeArticle)
 	}

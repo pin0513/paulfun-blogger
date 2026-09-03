@@ -10,6 +10,7 @@ import { RelatedArticles } from "@/components/article/RelatedArticles";
 import { CommentList } from "@/components/comment/CommentList";
 import { FontSizeControl } from "@/components/article/FontSizeControl";
 import { MobileToc } from "@/components/article/MobileToc";
+import { AiMarkdownButton } from "@/components/article/AiMarkdownButton";
 import type { Article } from "@/types";
 
 export default function ArticleContent() {
@@ -135,6 +136,11 @@ export default function ArticleContent() {
               #{tag.name}
             </Link>
           ))}
+
+          {/* AI 可讀格式 —— 放在標題正下方這一列，跟分類／標籤同一層級：
+              它回答的是「這篇是什麼、我要怎麼取得它」，屬於文章的識別資訊，
+              不是文末的互動（那是按讚與分享的位置）。 */}
+          <AiMarkdownButton articleId={article.id} className="ml-auto" />
         </div>
 
         {/* Meta */}
